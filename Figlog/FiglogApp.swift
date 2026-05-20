@@ -22,6 +22,7 @@ struct FiglogApp: App {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
+    private let tracker = FocusTracker()
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
 
@@ -30,8 +31,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let popover = NSPopover()
         popover.behavior = .transient
-        popover.contentSize = NSSize(width: 420, height: 320)
-        popover.contentViewController = NSHostingController(rootView: ContentView())
+        popover.contentSize = NSSize(width: 420, height: 520)
+        popover.contentViewController = NSHostingController(rootView: ContentView(tracker: tracker))
         self.popover = popover
 
         let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -49,6 +50,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.target = self
             button.action = #selector(togglePopover(_:))
         }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        tracker.stop()
     }
 
     @objc private func togglePopover(_ sender: NSStatusBarButton) {
