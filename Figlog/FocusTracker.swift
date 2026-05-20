@@ -248,8 +248,10 @@ final class FocusTracker: ObservableObject {
         guard breakRemindersEnabled else { return }
         guard !didSendBreakReminderForActiveSession else { return }
         guard session.duration >= breakReminderThreshold else { return }
-
+        
+        print("🔥 BREAK REMINDER TRIGGERED")
         didSendBreakReminderForActiveSession = true
+        
 
         let content = UNMutableNotificationContent()
         content.title = "Time for a short break"
