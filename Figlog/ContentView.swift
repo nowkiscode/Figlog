@@ -11,8 +11,11 @@ import AppKit
 struct ContentView: View {
 
     @Environment(\.openSettings) private var openSettings
+    @Environment(\.locale) private var locale
     @ObservedObject var tracker: FocusTracker
     @State private var showingHistory = false
+    @State private var showingHelp = false
+    @State private var historyPeriod: Int = 30
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.2.0"
@@ -69,117 +72,140 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
 
                 Spacer()
-
-                Text("Weekly History")
+                Text("Insights")
                     .font(.headline)
-
                 Spacer()
-                
                 Color.clear.frame(width: 40, height: 1)
             }
 
-            let stats = tracker.getWeeklyStats()
+            HStack {
+                Picker("", selection: $historyPeriod) {
+                    Text(String(localized: "Weekly")).tag(7)
+                    Text(String(localized: "Monthly")).tag(30)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 160)
+                Spacer()
+            }
+            .padding(.bottom, 4)
+
+            let stats = tracker.getStats(days: historyPeriod)
             let totalTime = stats.reduce(0) { $1.totalFocusTime + $0 }
             let totalIdle = stats.reduce(0) { $1.totalIdleTime + $0 }
-            let avgTime = stats.isEmpty ? 0 : totalTime / Double(stats.count)
-            let avgIdle = stats.isEmpty ? 0 : totalIdle / Double(stats.count)
-            let maxTime = stats.map { $0.totalFocusTime }.max() ?? 1
-
+            let periodTitle = historyPeriod == 7 ? String(localized: "Last 7 Days") : String(localized: "Last 30 Days")
+            
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 40) {
-                    VStack(alignment: .leading) {
-                        Text("Total Focus")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(FocusTracker.formatCompactDuration(totalTime))
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        Text("Daily Avg")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(FocusTracker.formatCompactDuration(avgTime))
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                    }
-                }
-                
-                HStack(spacing: 40) {
-                    VStack(alignment: .leading) {
-                        Text("Total Idle")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(FocusTracker.formatCompactDuration(totalIdle))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        Text("Avg Idle")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(FocusTracker.formatCompactDuration(avgIdle))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
+                    statBlock(title: periodTitle, value: FocusTracker.formatCompactDuration(totalTime))
+                    statBlock(title: String(localized: "Idle Total"), value: FocusTracker.formatCompactDuration(totalIdle))
                 }
             }
             .padding(.vertical, 8)
 
-            // Simple Bar Chart
-            HStack(alignment: .bottom, spacing: 12) {
-                ForEach(lastSevenDays(), id: \.self) { date in
-                    let record = stats.first { Calendar.current.isDate($0.day, inSameDayAs: date) }
-                    let height = record.map { CGFloat(($0.totalFocusTime / maxTime) * 140) } ?? 0
-                    
-                    VStack(spacing: 8) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(record != nil ? Color.accentColor : Color.secondary.opacity(0.2))
-                            .frame(height: max(4, height))
-                        
-                        Text(dayLabel(for: date))
-                            .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .frame(height: 160)
-            .padding(.top, 10)
+            Text(String(localized: "Activity Heatmap"))
+                .font(.subheadline)
+                .fontWeight(.semibold)
 
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Insights")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                
-                if let bestDay = stats.max(by: { $0.totalFocusTime < $1.totalFocusTime }) {
-                    HStack {
-                        Image(systemName: "trophy.fill")
-                            .foregroundStyle(.yellow)
-                        Text("Best focus on \(dayLabel(for: bestDay.day)): \(FocusTracker.formatCompactDuration(bestDay.totalFocusTime))")
-                            .font(.subheadline)
-                    }
-                } else {
-                    Text("Start focusing to see your trends!")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+            if historyPeriod == 7 {
+                weeklyBarChart(stats: stats)
+                    .padding(.top, 16)
+            } else {
+                calendarHeatmap(stats: stats, period: historyPeriod)
             }
-
+            
             Spacer()
         }
     }
 
-    private func lastSevenDays() -> [Date] {
+    private func calendarHeatmap(stats: [DailyFocusRecord], period: Int) -> some View {
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
+        let days = lastNDays(period)
+        let maxTime = stats.map { $0.totalFocusTime }.max() ?? 1
+
+        var localCalendar = Calendar.current
+        localCalendar.locale = locale
+        let weekdays = localCalendar.shortWeekdaySymbols
+
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                ForEach(weekdays, id: \.self) { day in
+                    Text(day)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            
+            LazyVGrid(columns: columns, spacing: 4) {
+                ForEach(days, id: \.self) { date in
+                    if date > Calendar.current.startOfDay(for: Date()) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.clear)
+                            .aspectRatio(1, contentMode: .fit)
+                    } else if let record = stats.first(where: { Calendar.current.isDate($0.day, inSameDayAs: date) }) {
+                        let intensity = record.totalFocusTime / maxTime
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.accentColor.opacity(max(0.15, intensity)))
+                            .aspectRatio(1, contentMode: .fit)
+                            .help("\(dayLabel(for: date)): \(FocusTracker.formatCompactDuration(record.totalFocusTime))")
+                    } else {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.secondary.opacity(0.1))
+                            .aspectRatio(1, contentMode: .fit)
+                            .help("\(dayLabel(for: date)): No activity")
+                    }
+                }
+            }
+        }
+    }
+
+    private func weeklyBarChart(stats: [DailyFocusRecord]) -> some View {
+        let days = lastNDays(7)
+        let maxTime = stats.map { $0.totalFocusTime }.max() ?? 1
+
+        return HStack(alignment: .bottom, spacing: 12) {
+            ForEach(days, id: \.self) { date in
+                let record = stats.first(where: { Calendar.current.isDate($0.day, inSameDayAs: date) })
+                let focusTime = record?.totalFocusTime ?? 0
+                let heightRatio = focusTime > 0 ? (focusTime / maxTime) : 0
+                
+                VStack(spacing: 6) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(focusTime > 0 ? Color.accentColor : Color.secondary.opacity(0.1))
+                        .frame(width: 32, height: max(4, 100 * heightRatio))
+                        .help("\(dayLabel(for: date)): \(FocusTracker.formatCompactDuration(focusTime))")
+                        
+                    Text(shortDayLabel(for: date))
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(date > Date() ? .clear : .secondary)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func shortDayLabel(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.dateFormat = "E"
+        return formatter.string(from: date)
+    }
+
+    private func lastNDays(_ daysCount: Int) -> [Date] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        return (0..<7).reversed().compactMap { calendar.date(byAdding: .day, value: -$0, to: today) }
+        let weekday = calendar.component(.weekday, from: today)
+        let daysToSaturday = 7 - weekday
+        let endOfWeek = calendar.date(byAdding: .day, value: daysToSaturday, to: today)!
+        
+        let gridCells = daysCount <= 7 ? 7 : 35
+        return (0..<gridCells).reversed().compactMap { calendar.date(byAdding: .day, value: -$0, to: endOfWeek) }
     }
 
     private func dayLabel(for date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "E"
+        formatter.locale = locale
+        formatter.dateFormat = "MMM d"
         return formatter.string(from: date)
     }
 
@@ -197,9 +223,30 @@ struct ContentView: View {
 
             Spacer()
 
+            Button(action: {
+                tracker.togglePause()
+            }) {
+                Image(systemName: tracker.isPaused ? "play.circle.fill" : "pause.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(tracker.isPaused ? .green : .orange)
+            }
+            .buttonStyle(.borderless)
+            .help(tracker.isPaused ? String(localized: "Resume tracking") : String(localized: "Pause tracking"))
+
             Text("v\(appVersion)")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
+                .padding(.leading, 8)
+                
+            Button(action: { showingHelp.toggle() }) {
+                Image(systemName: "questionmark.circle")
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+            .popover(isPresented: $showingHelp) {
+                HelpView()
+                    .environment(\.locale, locale)
+            }
         }
     }
 
@@ -295,8 +342,6 @@ struct ContentView: View {
         }
     }
 
-
-
     private var recentSessions: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Recent Sessions")
@@ -319,14 +364,15 @@ struct ContentView: View {
     }
 
     private var statusColor: Color {
+        if tracker.isPaused {
+            return .orange
+        }
         if tracker.isTracking {
             return .green
         }
-
         if tracker.isIdle {
-            return .orange
+            return .yellow
         }
-
         return .gray
     }
 
@@ -342,8 +388,6 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-
-
 
     private func sessionRow(_ session: FocusSession) -> some View {
         HStack(spacing: 10) {
@@ -413,28 +457,49 @@ private struct TimelineStrip: View {
 
     var body: some View {
         GeometryReader { proxy in
-            ZStack(alignment: .leading) {
+            ZStack(alignment: .bottomLeading) {
                 // Background Track
-                Capsule()
+                RoundedRectangle(cornerRadius: 4)
                     .fill(Color.secondary.opacity(0.15))
                     .frame(height: 12)
+                    .offset(y: -1)
+
+                // 6-hour Ticks (06:00, 12:00, 18:00)
+                ForEach(1..<4, id: \.self) { i in
+                    let ratio = CGFloat(i) / 4.0
+                    Rectangle()
+                        .fill(Color.secondary.opacity(0.3))
+                        .frame(width: 1, height: 12)
+                        .offset(x: proxy.size.width * ratio, y: -1)
+                }
 
                 ForEach(processedSegments) { segment in
                     let isHovered = hoveredSegmentId == segment.id
                     
-                    Capsule()
+                    RoundedRectangle(cornerRadius: 2)
                         .fill(segmentColor(for: segment))
                         .frame(
                             width: segmentWidth(for: segment, totalWidth: proxy.size.width),
                             height: isHovered ? 14 : 12
                         )
-                        .offset(x: segmentOffset(for: segment, totalWidth: proxy.size.width))
-                        .scaleEffect(isHovered ? 1.05 : 1.0, anchor: .center)
+                        .offset(
+                            x: segmentOffset(for: segment, totalWidth: proxy.size.width),
+                            y: isHovered ? .zero : -1
+                        )
                         .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isHovered)
                         .help(tooltipText(for: segment))
                         .onHover { hovering in
                             hoveredSegmentId = hovering ? segment.id : nil
                         }
+                }
+                
+                // Current Time Indicator
+                if Calendar.current.isDate(Date(), inSameDayAs: dayStart) {
+                    let nowRatio = min(1, max(0, Date().timeIntervalSince(dayStart) / max(1, dayEnd.timeIntervalSince(dayStart))))
+                    Rectangle()
+                        .fill(Color.red.opacity(0.6))
+                        .frame(width: 2, height: 14)
+                        .offset(x: proxy.size.width * nowRatio, y: 0)
                 }
             }
         }
@@ -478,5 +543,47 @@ private struct TimelineStrip: View {
             return max(3, totalWidth - offset)
         }
         return visualWidth
+    }
+}
+
+struct HelpView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(String(localized: "How to use FigLog"))
+                .font(.headline)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text(String(localized: "Timeline Colors:"))
+                    .font(.subheadline).bold()
+                HStack {
+                    Circle().fill(.green).frame(width: 8, height: 8)
+                    Text(String(localized: "Green: Currently tracking Figma session"))
+                }
+                HStack {
+                    Circle().fill(Color.accentColor).frame(width: 8, height: 8)
+                    Text(String(localized: "Blue: Completed focus session (> 15m)"))
+                }
+                HStack {
+                    Circle().fill(Color.accentColor.opacity(0.7)).frame(width: 8, height: 8)
+                    Text(String(localized: "Light Blue: Short focus session (< 15m)"))
+                }
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text(String(localized: "Grace Period:"))
+                    .font(.subheadline).bold()
+                Text(String(localized: "Allows you to switch to other apps briefly without breaking your current focus session. If you return to Figma within this time, the session continues uninterrupted. If not, the timer stops and deducts the grace period."))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text(String(localized: "Pause/Resume:"))
+                    .font(.subheadline).bold()
+                Text(String(localized: "Manually pause tracking if you want to keep Figma open but stop the timer. It will automatically resume the next time you actively use Figma."))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding()
+        .frame(width: 320)
     }
 }

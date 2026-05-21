@@ -9,6 +9,7 @@ import AppKit
 struct SettingsView: View {
     @ObservedObject var tracker: FocusTracker
     @StateObject private var launchAtLogin = LaunchAtLoginController()
+    @AppStorage("appLanguage") private var appLanguage = "en"
 
     let gracePeriodOptions: [TimeInterval] = [
         1 * 60,
@@ -26,9 +27,25 @@ struct SettingsView: View {
         90 * 60
     ]
 
+    let idleThresholdOptions: [TimeInterval] = [
+        30,
+        60,
+        120,
+        180,
+        300,
+        600
+    ]
+
     var body: some View {
         TabView {
             Form {
+                Section {
+                    Picker("Language", selection: $appLanguage) {
+                        Text("English").tag("en")
+                        Text("Korean").tag("ko")
+                    }
+                }
+                
                 Section {
                     Toggle("Launch at login", isOn: Binding(
                         get: { launchAtLogin.isEnabled },
@@ -42,6 +59,18 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Picker("Idle after", selection: Binding(
+                        get: { tracker.idleThreshold },
+                        set: { tracker.setIdleThreshold($0) }
+                    )) {
+                        ForEach(idleThresholdOptions, id: \.self) { duration in
+                            Text(formatDuration(duration)).tag(duration)
+                        }
+                    }
+                    Text("Time without activity before a session is marked idle.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
                     Picker("Grace period", selection: Binding(
                         get: { tracker.nonFigmaGracePeriod },
                         set: { tracker.setNonFigmaGracePeriod($0) }
@@ -71,7 +100,7 @@ struct SettingsView: View {
                 }
             }
             .padding(20)
-            .frame(width: 400, height: 260)
+            .frame(width: 400, height: 320)
             .tabItem {
                 Label("General", systemImage: "gear")
             }
@@ -81,5 +110,14 @@ struct SettingsView: View {
     private func formatMinutes(_ duration: TimeInterval) -> String {
         let minutes = Int(duration) / 60
         return "\(minutes) minutes"
+    }
+
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let secs = Int(duration)
+        if secs >= 60 {
+            let mins = secs / 60
+            return mins == 1 ? "1 minute" : "\(mins) minutes"
+        }
+        return "\(secs) seconds"
     }
 }

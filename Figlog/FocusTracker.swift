@@ -18,27 +18,30 @@ struct FocusSession: Codable, Identifiable, Equatable {
 }
 
 @MainActor
-final class FocusTracker: ObservableObject {
+final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
 
     enum TrackingState {
         case tracking
         case activeOutsideFigma
         case idle
         case waitingForFigma
+        case paused
     }
 
     @Published private(set) var isTracking = false
     @Published private(set) var isIdle = false
+    @Published private(set) var isPaused = false
     @Published private(set) var isUsingFigma = false
     @Published private(set) var todayFocusTime: TimeInterval = 0
     @Published private(set) var todayIdleTime: TimeInterval = 0
     @Published private(set) var todaySessions: [FocusSession] = []
     @Published private(set) var breakRemindersEnabled = true
 
-    let idleThreshold: TimeInterval = 60
+    @Published private(set) var idleThreshold: TimeInterval = 60
     @Published private(set) var nonFigmaGracePeriod: TimeInterval = 5 * 60
     @Published private(set) var breakReminderThreshold: TimeInterval = 50 * 60
 
+    private let idleThresholdKey = "FigLog.FocusTracker.IdleThreshold"
     private let breakReminderKey = "FigLog.FocusTracker.BreakRemindersEnabled"
     private let gracePeriodKey = "FigLog.FocusTracker.NonFigmaGracePeriod"
     private let breakThresholdKey = "FigLog.FocusTracker.BreakReminderThreshold"
@@ -56,12 +59,29 @@ final class FocusTracker: ObservableObject {
 
     private let figmaBundleIdentifier = "com.figma.Desktop"
 
-    init() {
+    override init() {
+        super.init()
         restoreSettings()
         restoreSnapshot()
+        setupNotificationCategories()
         requestNotificationAuthorization()
         setupNotificationObservers()
         start()
+        UNUserNotificationCenter.current().delegate = self
+    }
+
+    private func setupNotificationCategories() {
+        let skipAction = UNNotificationAction(identifier: "SKIP_BREAK", title: "Skip", options: [])
+        let takeBreakAction = UNNotificationAction(identifier: "TAKE_BREAK", title: "Take Break", options: [.foreground])
+        
+        let category = UNNotificationCategory(
+            identifier: "BREAK_REMINDER_CATEGORY",
+            actions: [skipAction, takeBreakAction],
+            intentIdentifiers: [],
+            options: .customDismissAction
+        )
+        
+        UNUserNotificationCenter.current().setNotificationCategories([category])
     }
 
     private func setupNotificationObservers() {
@@ -114,12 +134,14 @@ final class FocusTracker: ObservableObject {
     }
 
     var trackingState: TrackingState {
-        if isTracking {
+        if isPaused {
+            return .paused
+        }
 
+        if isTracking {
             if isUsingFigma {
                 return .tracking
             }
-
             return .activeOutsideFigma
         }
 
@@ -132,17 +154,16 @@ final class FocusTracker: ObservableObject {
 
     var statusText: String {
         switch trackingState {
+        case .paused:
+            return String(localized: "Paused")
         case .tracking:
-            return "Tracking Figma"
-
+            return String(localized: "Tracking Figma")
         case .activeOutsideFigma:
-            return "Out of Figma but still tracking"
-
+            return String(localized: "Out of Figma but still tracking")
         case .idle:
-            return "Idle"
-
+            return String(localized: "Idle")
         case .waitingForFigma:
-            return "Waiting for Figma"
+            return String(localized: "Waiting for Figma")
         }
     }
 
@@ -151,7 +172,19 @@ final class FocusTracker: ObservableObject {
     }
 
     var formattedIdleThreshold: String {
-        "\(Int(idleThreshold))s"
+        Self.formatCompactDuration(idleThreshold)
+    }
+
+    func togglePause() {
+        isPaused.toggle()
+        if isPaused {
+            let now = Date()
+            isTracking = false
+            hasEnteredFocusSession = false
+            endActiveSession(at: now)
+        } else {
+            // Resume updates implicitly on next tick if Figma is active
+        }
     }
 
     var todaySessionCount: Int {
@@ -203,6 +236,12 @@ final class FocusTracker: ObservableObject {
         breakReminderThreshold = threshold
         UserDefaults.standard.set(threshold, forKey: breakThresholdKey)
         print("Break reminder Time set \(threshold)")
+    }
+
+    func setIdleThreshold(_ threshold: TimeInterval) {
+        idleThreshold = threshold
+        UserDefaults.standard.set(threshold, forKey: idleThresholdKey)
+        print("Idle after Time set \(threshold)")
     }
 
     func start() {
@@ -269,6 +308,14 @@ final class FocusTracker: ObservableObject {
         let isFigmaActive = activeApp == figmaBundleIdentifier
         isUsingFigma = isFigmaActive
 
+        if isFigmaActive && !isIdle && isPaused {
+            isPaused = false
+        }
+
+        if isPaused {
+            return
+        }
+
         if isFigmaActive && !isIdle {
             hasEnteredFocusSession = true
             nonFigmaActivityDuration = 0
@@ -285,7 +332,18 @@ final class FocusTracker: ObservableObject {
             if nonFigmaActivityDuration >= nonFigmaGracePeriod {
                 isTracking = false
                 hasEnteredFocusSession = false
-                endActiveSession(at: now)
+                
+                // Backdate the session end time and subtract the grace period from total focus time
+                todayFocusTime -= nonFigmaGracePeriod
+                todayFocusTime = max(0, todayFocusTime)
+                
+                let backdatedEnd = now.addingTimeInterval(-nonFigmaGracePeriod)
+                if var session = activeSession {
+                    session.duration -= nonFigmaGracePeriod
+                    session.duration = max(0, session.duration)
+                    activeSession = session
+                }
+                endActiveSession(at: backdatedEnd)
             } else {
                 isTracking = true
                 todayFocusTime += 1
@@ -368,6 +426,9 @@ final class FocusTracker: ObservableObject {
         if defaults.object(forKey: breakThresholdKey) != nil {
             breakReminderThreshold = defaults.double(forKey: breakThresholdKey)
         }
+        if defaults.object(forKey: idleThresholdKey) != nil {
+            idleThreshold = defaults.double(forKey: idleThresholdKey)
+        }
     }
 
     private func restoreSnapshot() {
@@ -390,8 +451,8 @@ final class FocusTracker: ObservableObject {
         )
     }
 
-    func getWeeklyStats() -> [DailyFocusRecord] {
-        sessionStore.loadRecordsForLast(days: 7)
+    func getStats(days: Int = 30) -> [DailyFocusRecord] {
+        sessionStore.loadRecordsForLast(days: days)
     }
 
     private func requestNotificationAuthorization() {
@@ -410,6 +471,7 @@ final class FocusTracker: ObservableObject {
         content.title = "Time for a short break"
         content.body = "You have focused in Figma for \(Self.formatCompactDuration(breakReminderThreshold))."
         content.sound = .default
+        content.categoryIdentifier = "BREAK_REMINDER_CATEGORY"
 
         let request = UNNotificationRequest(
             identifier: "figlog.break-reminder.\(session.id.uuidString)",
@@ -430,6 +492,18 @@ final class FocusTracker: ObservableObject {
                 self.didSendBreakReminderForActiveSession = true
             }
         }
+    }
+
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        if response.actionIdentifier == "TAKE_BREAK" {
+            Task { @MainActor in
+                print("☕️ Take Break clicked. Pausing tracking.")
+                if !self.isPaused {
+                    self.togglePause()
+                }
+            }
+        }
+        completionHandler()
     }
 
     static func formatDuration(_ duration: TimeInterval) -> String {

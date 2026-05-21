@@ -12,11 +12,23 @@ import AppKit
 struct FiglogApp: App {
 
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @AppStorage("appLanguage") private var appLanguage = "en"
 
     var body: some Scene {
         Settings {
             SettingsView(tracker: appDelegate.tracker)
+                .environment(\.locale, Locale(identifier: appLanguage))
         }
+    }
+}
+
+struct PopoverRootView: View {
+    @ObservedObject var tracker: FocusTracker
+    @AppStorage("appLanguage") private var appLanguage = "en"
+    
+    var body: some View {
+        ContentView(tracker: tracker)
+            .environment(\.locale, Locale(identifier: appLanguage))
     }
 }
 
@@ -32,7 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let popover = NSPopover()
         popover.behavior = .transient
         popover.contentSize = NSSize(width: 420, height: 520)
-        popover.contentViewController = NSHostingController(rootView: ContentView(tracker: tracker))
+        popover.contentViewController = NSHostingController(rootView: PopoverRootView(tracker: tracker))
         self.popover = popover
 
         let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
