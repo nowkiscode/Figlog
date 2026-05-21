@@ -22,17 +22,20 @@ final class FocusTracker: ObservableObject {
 
     enum TrackingState {
         case tracking
+        case activeOutsideFigma
         case idle
         case waitingForFigma
     }
 
     @Published private(set) var isTracking = false
     @Published private(set) var isIdle = false
+    @Published private(set) var isUsingFigma = false
     @Published private(set) var todayFocusTime: TimeInterval = 0
     @Published private(set) var todaySessions: [FocusSession] = []
     @Published private(set) var breakRemindersEnabled = true
 
     let idleThreshold: TimeInterval = 60
+    let nonFigmaGracePeriod: TimeInterval = 5 * 60
     let breakReminderThreshold: TimeInterval = 50 * 60
 
     private let figmaBundleIdentifier = "com.figma.Desktop"
@@ -42,6 +45,8 @@ final class FocusTracker: ObservableObject {
     private var activeSession: FocusSession?
     private var didSendBreakReminderForActiveSession = false
     private var currentDay = Calendar.current.startOfDay(for: Date())
+    private var hasEnteredFocusSession = false
+    private var nonFigmaActivityDuration: TimeInterval = 0
 
     init() {
         restoreSettings()
@@ -52,7 +57,12 @@ final class FocusTracker: ObservableObject {
 
     var trackingState: TrackingState {
         if isTracking {
-            return .tracking
+
+            if isUsingFigma {
+                return .tracking
+            }
+
+            return .activeOutsideFigma
         }
 
         if isIdle {
@@ -66,8 +76,13 @@ final class FocusTracker: ObservableObject {
         switch trackingState {
         case .tracking:
             return "Tracking Figma"
+
+        case .activeOutsideFigma:
+            return "Out of Figma but still tracking"
+
         case .idle:
             return "Idle"
+
         case .waitingForFigma:
             return "Waiting for Figma"
         }
@@ -141,20 +156,60 @@ final class FocusTracker: ObservableObject {
         rollOverDayIfNeeded(now)
 
         let activeApp = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
-        let idleTime = CGEventSource.secondsSinceLastEventType(
+
+        let mouseIdle = CGEventSource.secondsSinceLastEventType(
             .hidSystemState,
             eventType: .mouseMoved
         )
 
+        let keyboardIdle = CGEventSource.secondsSinceLastEventType(
+            .hidSystemState,
+            eventType: .keyDown
+        )
+
+        let clickIdle = CGEventSource.secondsSinceLastEventType(
+            .hidSystemState,
+            eventType: .leftMouseDown
+        )
+
+        let idleTime = min(mouseIdle, keyboardIdle, clickIdle)
+
         isIdle = idleTime >= idleThreshold
 
-        if activeApp == figmaBundleIdentifier && !isIdle {
-            isTracking = true
-            todayFocusTime += 1
-            updateActiveSession(at: now)
+        let isFigmaActive = activeApp == figmaBundleIdentifier
+        isUsingFigma = isFigmaActive
+
+        if isFigmaActive && !isIdle {
+            hasEnteredFocusSession = true
+            nonFigmaActivityDuration = 0
+        }
+
+        if hasEnteredFocusSession && !isIdle {
+
+            if !isFigmaActive {
+                nonFigmaActivityDuration += 1
+            } else {
+                nonFigmaActivityDuration = 0
+            }
+
+            if nonFigmaActivityDuration >= nonFigmaGracePeriod {
+                isTracking = false
+                hasEnteredFocusSession = false
+                endActiveSession(at: now)
+            } else {
+                isTracking = true
+                todayFocusTime += 1
+                updateActiveSession(at: now)
+            }
+
         } else {
             isTracking = false
-            endActiveSession(at: now)
+
+            if isIdle {
+                nonFigmaActivityDuration = 0
+                hasEnteredFocusSession = false
+                endActiveSession(at: now)
+            }
         }
 
         persistSnapshot()
@@ -188,6 +243,8 @@ final class FocusTracker: ObservableObject {
         }
 
         activeSession = nil
+        hasEnteredFocusSession = false
+        nonFigmaActivityDuration = 0
         didSendBreakReminderForActiveSession = false
     }
 
@@ -250,7 +307,6 @@ final class FocusTracker: ObservableObject {
         guard session.duration >= breakReminderThreshold else { return }
         
         print("🔥 BREAK REMINDER TRIGGERED")
-        didSendBreakReminderForActiveSession = true
         
 
         let content = UNMutableNotificationContent()
@@ -264,7 +320,19 @@ final class FocusTracker: ObservableObject {
             trigger: nil
         )
 
-        UNUserNotificationCenter.current().add(request)
+        UNUserNotificationCenter.current().add(request) { [weak self] error in
+
+            if let error {
+                print("❌ Notification error: \(error.localizedDescription)")
+                return
+            }
+
+            print("✅ Break reminder delivered")
+
+            Task { @MainActor in
+                self?.didSendBreakReminderForActiveSession = true
+            }
+        }
     }
 
     static func formatDuration(_ duration: TimeInterval) -> String {
