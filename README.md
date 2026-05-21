@@ -7,8 +7,6 @@
 ---
 
 ## 📥 설치 방법 (Installation)
-
-> [!IMPORTANT]
 ### [👉 Figlog 최신 버전 다운로드 (Download Latest Version) 👈](https://drive.google.com/file/d/1oCJsITSRtXmA9hLBvTi2aVJR1Udiv-yJ/view?usp=sharing)
 
 1. 위의 **다운로드 링크**를 클릭하여 설치 파일을 다운로드합니다.
