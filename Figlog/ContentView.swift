@@ -392,7 +392,7 @@ private struct TimelineStrip: View {
         for session in sorted {
             let isCurrent = (session.id == sessions.last?.id && isTracking)
             
-            if var last = segments.last,
+            if let last = segments.last,
                !last.isCurrent,
                !isCurrent,
                session.startedAt.timeIntervalSince(last.endedAt) <= 120 {
