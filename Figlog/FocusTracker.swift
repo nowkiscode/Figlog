@@ -31,6 +31,7 @@ final class FocusTracker: ObservableObject {
     @Published private(set) var isIdle = false
     @Published private(set) var isUsingFigma = false
     @Published private(set) var todayFocusTime: TimeInterval = 0
+    @Published private(set) var todayIdleTime: TimeInterval = 0
     @Published private(set) var todaySessions: [FocusSession] = []
     @Published private(set) var breakRemindersEnabled = true
 
@@ -46,6 +47,9 @@ final class FocusTracker: ObservableObject {
     private var currentDay = Calendar.current.startOfDay(for: Date())
     private var hasEnteredFocusSession = false
     private var nonFigmaActivityDuration: TimeInterval = 0
+
+    private var lastPersistedAt = Date.distantPast
+    private let persistenceInterval: TimeInterval = 30
 
     private let figmaBundleIdentifier = "com.figma.Desktop"
 
@@ -148,8 +152,9 @@ final class FocusTracker: ObservableObject {
     func stop() {
         timerCancellable?.cancel()
         timerCancellable = nil
+
         endActiveSession(at: Date())
-        persistSnapshot()
+        persistSnapshot(force: true)
     }
 
     private func tick() {
@@ -176,6 +181,10 @@ final class FocusTracker: ObservableObject {
         let idleTime = min(mouseIdle, keyboardIdle, clickIdle)
 
         isIdle = idleTime >= idleThreshold
+        
+        if isIdle {
+            todayIdleTime += 1
+        }
 
         let isFigmaActive = activeApp == figmaBundleIdentifier
         isUsingFigma = isFigmaActive
@@ -247,6 +256,7 @@ final class FocusTracker: ObservableObject {
         hasEnteredFocusSession = false
         nonFigmaActivityDuration = 0
         didSendBreakReminderForActiveSession = false
+        persistSnapshot(force: true)
     }
 
     private func rollOverDayIfNeeded(_ date: Date) {
@@ -257,8 +267,9 @@ final class FocusTracker: ObservableObject {
         endActiveSession(at: date)
         currentDay = startOfToday
         todayFocusTime = 0
+        todayIdleTime = 0
         todaySessions = []
-        persistSnapshot()
+        persistSnapshot(force: true)
     }
 
     private func restoreSettings() {
@@ -274,14 +285,26 @@ final class FocusTracker: ObservableObject {
 
         currentDay = record.day
         todayFocusTime = record.totalFocusTime
+        todayIdleTime = record.totalIdleTime
         todaySessions = record.sessions
     }
 
-    private func persistSnapshot() {
+    private func persistSnapshot(force: Bool = false) {
+        let now = Date()
+        if !force && now.timeIntervalSince(lastPersistedAt) < persistenceInterval {
+            return
+        }
+
         sessionStore.saveTodayRecord(
             totalFocusTime: todayFocusTime,
+            totalIdleTime: todayIdleTime,
             sessions: todaySessions
         )
+        lastPersistedAt = now
+    }
+
+    func getWeeklyStats() -> [DailyFocusRecord] {
+        sessionStore.loadRecordsForLast(days: 7)
     }
 
     private func requestNotificationAuthorization() {
@@ -307,7 +330,7 @@ final class FocusTracker: ObservableObject {
             trigger: nil
         )
 
-        UNUserNotificationCenter.current().add(request) { [weak self] error in
+        UNUserNotificationCenter.current().add(request) { error in
 
             if let error {
                 print("❌ Notification error: \(error.localizedDescription)")
@@ -317,7 +340,7 @@ final class FocusTracker: ObservableObject {
             print("✅ Break reminder delivered")
 
             Task { @MainActor in
-                self?.didSendBreakReminderForActiveSession = true
+                self.didSendBreakReminderForActiveSession = true
             }
         }
     }

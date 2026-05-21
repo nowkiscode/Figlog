@@ -18,6 +18,7 @@ import Foundation
 struct DailyFocusRecord: Codable {
     let day: Date
     var totalFocusTime: TimeInterval
+    var totalIdleTime: TimeInterval = 0
     var sessions: [FocusSession]
 }
 
@@ -38,6 +39,7 @@ final class FocusSessionStore {
 
     func saveTodayRecord(
         totalFocusTime: TimeInterval,
+        totalIdleTime: TimeInterval,
         sessions: [FocusSession]
     ) {
 
@@ -48,6 +50,7 @@ final class FocusSessionStore {
         let newRecord = DailyFocusRecord(
             day: today,
             totalFocusTime: totalFocusTime,
+            totalIdleTime: totalIdleTime,
             sessions: sessions
         )
 
@@ -69,6 +72,12 @@ final class FocusSessionStore {
         UserDefaults.standard.set(data, forKey: storageKey)
 
         print("💾 Saved focus record for \(today)")
+    }
+
+    func getDayLabel(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "E"
+        return formatter.string(from: date)
     }
 
     func loadAllRecords() -> [DailyFocusRecord] {

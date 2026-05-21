@@ -12,12 +12,25 @@ struct ContentView: View {
 
     @ObservedObject var tracker: FocusTracker
     @StateObject private var launchAtLogin = LaunchAtLoginController()
+    @State private var showingHistory = false
 
     private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.2.0"
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            if showingHistory {
+                historyView
+            } else {
+                mainView
+            }
+        }
+        .padding(24)
+        .frame(width: 420, height: 520)
+    }
+
+    private var mainView: some View {
         VStack(alignment: .leading, spacing: 20) {
             header
 
@@ -43,8 +56,133 @@ struct ContentView: View {
 
             footer
         }
-        .padding(24)
-        .frame(width: 420, height: 520)
+    }
+
+    private var historyView: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Button(action: { showingHistory = false }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("Back")
+                    }
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+
+                Spacer()
+
+                Text("Weekly History")
+                    .font(.headline)
+
+                Spacer()
+                
+                Color.clear.frame(width: 40, height: 1)
+            }
+
+            let stats = tracker.getWeeklyStats()
+            let totalTime = stats.reduce(0) { $1.totalFocusTime + $0 }
+            let totalIdle = stats.reduce(0) { $1.totalIdleTime + $0 }
+            let avgTime = stats.isEmpty ? 0 : totalTime / Double(stats.count)
+            let avgIdle = stats.isEmpty ? 0 : totalIdle / Double(stats.count)
+            let maxTime = stats.map { $0.totalFocusTime }.max() ?? 1
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 40) {
+                    VStack(alignment: .leading) {
+                        Text("Total Focus")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(FocusTracker.formatCompactDuration(totalTime))
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                    }
+                    
+                    VStack(alignment: .leading) {
+                        Text("Daily Avg")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(FocusTracker.formatCompactDuration(avgTime))
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                    }
+                }
+                
+                HStack(spacing: 40) {
+                    VStack(alignment: .leading) {
+                        Text("Total Idle")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(FocusTracker.formatCompactDuration(totalIdle))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    VStack(alignment: .leading) {
+                        Text("Avg Idle")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(FocusTracker.formatCompactDuration(avgIdle))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding(.vertical, 8)
+
+            // Simple Bar Chart
+            HStack(alignment: .bottom, spacing: 12) {
+                ForEach(lastSevenDays(), id: \.self) { date in
+                    let record = stats.first { Calendar.current.isDate($0.day, inSameDayAs: date) }
+                    let height = record.map { CGFloat(($0.totalFocusTime / maxTime) * 140) } ?? 0
+                    
+                    VStack(spacing: 8) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(record != nil ? Color.accentColor : Color.secondary.opacity(0.2))
+                            .frame(height: max(4, height))
+                        
+                        Text(dayLabel(for: date))
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .frame(height: 160)
+            .padding(.top, 10)
+
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Insights")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                
+                if let bestDay = stats.max(by: { $0.totalFocusTime < $1.totalFocusTime }) {
+                    HStack {
+                        Image(systemName: "trophy.fill")
+                            .foregroundStyle(.yellow)
+                        Text("Best focus on \(dayLabel(for: bestDay.day)): \(FocusTracker.formatCompactDuration(bestDay.totalFocusTime))")
+                            .font(.subheadline)
+                    }
+                } else {
+                    Text("Start focusing to see your trends!")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+        }
+    }
+
+    private func lastSevenDays() -> [Date] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        return (0..<7).reversed().compactMap { calendar.date(byAdding: .day, value: -$0, to: today) }
+    }
+
+    private func dayLabel(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "E"
+        return formatter.string(from: date)
     }
 
     private var header: some View {
@@ -61,7 +199,7 @@ struct ContentView: View {
 
             Spacer()
 
-            Text("v\(appVersion) Beta")
+            Text("v\(appVersion)")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
@@ -87,6 +225,16 @@ struct ContentView: View {
 
             Spacer()
 
+            Button("History") {
+                showingHistory = true
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+
+            Text("•")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+
             Button("Quit FigLog") {
                 NSApp.terminate(nil)
             }
@@ -98,6 +246,7 @@ struct ContentView: View {
     private var statsRow: some View {
         HStack(spacing: 12) {
             statBlock(title: "Sessions", value: "\(tracker.todaySessionCount)")
+            statBlock(title: "Idle Today", value: FocusTracker.formatCompactDuration(tracker.todayIdleTime))
             statBlock(title: "Idle after", value: tracker.formattedIdleThreshold)
         }
     }
