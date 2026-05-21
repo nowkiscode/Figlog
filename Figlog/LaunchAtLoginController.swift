@@ -49,5 +49,6 @@ final class LaunchAtLoginController: ObservableObject {
         }
 
         refresh()
+        print("Launch at login set to \(enabled)")
     }
 }

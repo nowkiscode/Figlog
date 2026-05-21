@@ -15,14 +15,14 @@ struct FiglogApp: App {
 
     var body: some Scene {
         Settings {
-            EmptyView()
+            SettingsView(tracker: appDelegate.tracker)
         }
     }
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
-    private let tracker = FocusTracker()
+    let tracker = FocusTracker()
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
 
@@ -53,7 +53,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        tracker.stop()
+        // tracker.stop() is now handled natively via NotificationCenter inside FocusTracker
     }
 
     @objc private func togglePopover(_ sender: NSStatusBarButton) {

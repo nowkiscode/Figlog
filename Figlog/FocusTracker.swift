@@ -36,10 +36,12 @@ final class FocusTracker: ObservableObject {
     @Published private(set) var breakRemindersEnabled = true
 
     let idleThreshold: TimeInterval = 60
-    let nonFigmaGracePeriod: TimeInterval = 5 * 60
-    let breakReminderThreshold: TimeInterval = 50 * 60
+    @Published private(set) var nonFigmaGracePeriod: TimeInterval = 5 * 60
+    @Published private(set) var breakReminderThreshold: TimeInterval = 50 * 60
 
     private let breakReminderKey = "FigLog.FocusTracker.BreakRemindersEnabled"
+    private let gracePeriodKey = "FigLog.FocusTracker.NonFigmaGracePeriod"
+    private let breakThresholdKey = "FigLog.FocusTracker.BreakReminderThreshold"
     private let sessionStore = FocusSessionStore()
     private var timerCancellable: AnyCancellable?
     private var activeSession: FocusSession?
@@ -48,8 +50,9 @@ final class FocusTracker: ObservableObject {
     private var hasEnteredFocusSession = false
     private var nonFigmaActivityDuration: TimeInterval = 0
 
-    private var lastPersistedAt = Date.distantPast
-    private let persistenceInterval: TimeInterval = 30
+    private var lastTickDate = Date()
+    private var lastEmergencyAutosaveAt = Date()
+    private var notificationCancellables = Set<AnyCancellable>()
 
     private let figmaBundleIdentifier = "com.figma.Desktop"
 
@@ -57,7 +60,57 @@ final class FocusTracker: ObservableObject {
         restoreSettings()
         restoreSnapshot()
         requestNotificationAuthorization()
+        setupNotificationObservers()
         start()
+    }
+
+    private func setupNotificationObservers() {
+        let wsCenter = NSWorkspace.shared.notificationCenter
+        
+        wsCenter.publisher(for: NSWorkspace.willSleepNotification)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.handleWillSleep()
+                }
+            }
+            .store(in: &notificationCancellables)
+            
+        wsCenter.publisher(for: NSWorkspace.didWakeNotification)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.handleDidWake()
+                }
+            }
+            .store(in: &notificationCancellables)
+
+        NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.handleWillTerminate()
+                }
+            }
+            .store(in: &notificationCancellables)
+    }
+
+    private func handleWillSleep() {
+        print("💤 System will sleep. Ending active session and saving...")
+        let now = Date()
+        endActiveSession(at: now)
+        persistSnapshot()
+        timerCancellable?.cancel()
+        timerCancellable = nil
+    }
+
+    private func handleDidWake() {
+        print("☀️ System did wake. Resetting timers...")
+        lastTickDate = Date()
+        lastEmergencyAutosaveAt = Date()
+        start()
+    }
+
+    private func handleWillTerminate() {
+        print("🛑 App will terminate. Saving...")
+        stop()
     }
 
     var trackingState: TrackingState {
@@ -137,10 +190,25 @@ final class FocusTracker: ObservableObject {
         if enabled {
             requestNotificationAuthorization()
         }
+        print("Break reminder set to \(enabled)")
+    }
+
+    func setNonFigmaGracePeriod(_ period: TimeInterval) {
+        nonFigmaGracePeriod = period
+        UserDefaults.standard.set(period, forKey: gracePeriodKey)
+        print("GracePeriod Time set \(period)")
+    }
+
+    func setBreakReminderThreshold(_ threshold: TimeInterval) {
+        breakReminderThreshold = threshold
+        UserDefaults.standard.set(threshold, forKey: breakThresholdKey)
+        print("Break reminder Time set \(threshold)")
     }
 
     func start() {
         guard timerCancellable == nil else { return }
+        lastTickDate = Date()
+        lastEmergencyAutosaveAt = Date()
 
         timerCancellable = Timer.publish(every: 1, on: .main, in: .common)
             .autoconnect()
@@ -154,11 +222,23 @@ final class FocusTracker: ObservableObject {
         timerCancellable = nil
 
         endActiveSession(at: Date())
-        persistSnapshot(force: true)
+        persistSnapshot()
     }
 
     private func tick() {
         let now = Date()
+        
+        let delta = now.timeIntervalSince(lastTickDate)
+        if delta >= 3.0 {
+            print("🛡️ Gap protection triggered: delta of \(String(format: "%.2f", delta)) seconds detected. Ending previous session at \(lastTickDate)")
+            endActiveSession(at: lastTickDate)
+            rollOverDayIfNeeded(now)
+            lastTickDate = now
+            lastEmergencyAutosaveAt = now
+            return
+        }
+        
+        lastTickDate = now
         rollOverDayIfNeeded(now)
 
         let activeApp = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
@@ -222,7 +302,12 @@ final class FocusTracker: ObservableObject {
             }
         }
 
-        persistSnapshot()
+        // Emergency Autosave (Every 5 minutes = 300 seconds)
+        if now.timeIntervalSince(lastEmergencyAutosaveAt) >= 300 {
+            print("⏳ Emergency autosave triggered")
+            persistSnapshot()
+            lastEmergencyAutosaveAt = now
+        }
     }
 
     private func updateActiveSession(at date: Date) {
@@ -256,7 +341,7 @@ final class FocusTracker: ObservableObject {
         hasEnteredFocusSession = false
         nonFigmaActivityDuration = 0
         didSendBreakReminderForActiveSession = false
-        persistSnapshot(force: true)
+        persistSnapshot()
     }
 
     private func rollOverDayIfNeeded(_ date: Date) {
@@ -269,12 +354,20 @@ final class FocusTracker: ObservableObject {
         todayFocusTime = 0
         todayIdleTime = 0
         todaySessions = []
-        persistSnapshot(force: true)
+        persistSnapshot()
     }
 
     private func restoreSettings() {
-        guard UserDefaults.standard.object(forKey: breakReminderKey) != nil else { return }
-        breakRemindersEnabled = UserDefaults.standard.bool(forKey: breakReminderKey)
+        let defaults = UserDefaults.standard
+        if defaults.object(forKey: breakReminderKey) != nil {
+            breakRemindersEnabled = defaults.bool(forKey: breakReminderKey)
+        }
+        if defaults.object(forKey: gracePeriodKey) != nil {
+            nonFigmaGracePeriod = defaults.double(forKey: gracePeriodKey)
+        }
+        if defaults.object(forKey: breakThresholdKey) != nil {
+            breakReminderThreshold = defaults.double(forKey: breakThresholdKey)
+        }
     }
 
     private func restoreSnapshot() {
@@ -289,18 +382,12 @@ final class FocusTracker: ObservableObject {
         todaySessions = record.sessions
     }
 
-    private func persistSnapshot(force: Bool = false) {
-        let now = Date()
-        if !force && now.timeIntervalSince(lastPersistedAt) < persistenceInterval {
-            return
-        }
-
+    private func persistSnapshot() {
         sessionStore.saveTodayRecord(
             totalFocusTime: todayFocusTime,
             totalIdleTime: todayIdleTime,
             sessions: todaySessions
         )
-        lastPersistedAt = now
     }
 
     func getWeeklyStats() -> [DailyFocusRecord] {
