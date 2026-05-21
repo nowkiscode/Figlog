@@ -38,15 +38,16 @@ final class FocusTracker: ObservableObject {
     let nonFigmaGracePeriod: TimeInterval = 5 * 60
     let breakReminderThreshold: TimeInterval = 50 * 60
 
-    private let figmaBundleIdentifier = "com.figma.Desktop"
-    private let storageKey = "FigLog.FocusTracker.Snapshot"
     private let breakReminderKey = "FigLog.FocusTracker.BreakRemindersEnabled"
+    private let sessionStore = FocusSessionStore()
     private var timerCancellable: AnyCancellable?
     private var activeSession: FocusSession?
     private var didSendBreakReminderForActiveSession = false
     private var currentDay = Calendar.current.startOfDay(for: Date())
     private var hasEnteredFocusSession = false
     private var nonFigmaActivityDuration: TimeInterval = 0
+
+    private let figmaBundleIdentifier = "com.figma.Desktop"
 
     init() {
         restoreSettings()
@@ -266,35 +267,21 @@ final class FocusTracker: ObservableObject {
     }
 
     private func restoreSnapshot() {
-        guard
-            let data = UserDefaults.standard.data(forKey: storageKey),
-            let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data)
-        else {
+        guard let record = sessionStore.loadTodayRecord() else {
+            currentDay = Calendar.current.startOfDay(for: Date())
             return
         }
 
-        let startOfToday = Calendar.current.startOfDay(for: Date())
-
-        guard snapshot.day == startOfToday else {
-            UserDefaults.standard.removeObject(forKey: storageKey)
-            currentDay = startOfToday
-            return
-        }
-
-        currentDay = snapshot.day
-        todayFocusTime = snapshot.todayFocusTime
-        todaySessions = snapshot.todaySessions
+        currentDay = record.day
+        todayFocusTime = record.totalFocusTime
+        todaySessions = record.sessions
     }
 
     private func persistSnapshot() {
-        let snapshot = Snapshot(
-            day: currentDay,
-            todayFocusTime: todayFocusTime,
-            todaySessions: todaySessions
+        sessionStore.saveTodayRecord(
+            totalFocusTime: todayFocusTime,
+            sessions: todaySessions
         )
-
-        guard let data = try? JSONEncoder().encode(snapshot) else { return }
-        UserDefaults.standard.set(data, forKey: storageKey)
     }
 
     private func requestNotificationAuthorization() {
@@ -365,10 +352,4 @@ final class FocusTracker: ObservableObject {
 
         return "\(formatter.string(from: session.startedAt)) - \(formatter.string(from: session.endedAt))"
     }
-}
-
-private struct Snapshot: Codable {
-    let day: Date
-    let todayFocusTime: TimeInterval
-    let todaySessions: [FocusSession]
 }
