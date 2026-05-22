@@ -1,7 +1,6 @@
 import Foundation
 import Combine
 import FirebaseCore
-import FirebaseAuth
 import FirebaseFirestore
 
 struct UserProfile: Codable, Identifiable {
@@ -23,7 +22,6 @@ final class FirebaseManager: ObservableObject {
     @Published var debugError: String = ""
     
     private var db = Firestore.firestore()
-    private var auth = Auth.auth()
     private var friendsListener: ListenerRegistration?
     private var myProfileListener: ListenerRegistration?
     
@@ -31,20 +29,17 @@ final class FirebaseManager: ObservableObject {
     
     private init() {}
     
-    // 1. 익명 로그인 및 내 프로필 초기화
-    func signInAnonymously() async {
-        do {
-            let authResult = try await auth.signInAnonymously()
-            let user = authResult.user
-            print("Firebase signed in: \(user.uid)")
-            
-            await setupUserProfile(uid: user.uid)
-            listenToMyProfile(uid: user.uid)
-        } catch {
-            let errorMsg = "Auth Error: \(error.localizedDescription)"
-            print(errorMsg)
-            self.debugError = errorMsg
+    // 1. 익명 로그인 (FirebaseAuth 제거 및 임의 UUID 사용)
+    func setupUser() async {
+        var currentUID = UserDefaults.standard.string(forKey: "userUID") ?? ""
+        if currentUID.isEmpty {
+            currentUID = UUID().uuidString
+            UserDefaults.standard.set(currentUID, forKey: "userUID")
         }
+        print("Firebase initialized with UUID: \(currentUID)")
+        
+        await setupUserProfile(uid: currentUID)
+        listenToMyProfile(uid: currentUID)
     }
     
     private func setupUserProfile(uid: String) async {
@@ -88,7 +83,7 @@ final class FirebaseManager: ObservableObject {
     
     // 2. 실시간 내 상태 업데이트 (FocusTracker에서 호출)
     func updateMyStatus(status: String, todayFocusTime: TimeInterval) {
-        guard let uid = auth.currentUser?.uid else { return }
+        guard let uid = UserDefaults.standard.string(forKey: "userUID") else { return }
         
         let data: [String: Any] = [
             "status": status,
@@ -105,13 +100,13 @@ final class FirebaseManager: ObservableObject {
     
     // 닉네임 변경
     func updateDisplayName(_ name: String) {
-        guard let uid = auth.currentUser?.uid else { return }
+        guard let uid = UserDefaults.standard.string(forKey: "userUID") else { return }
         db.collection(usersCollection).document(uid).updateData(["displayName": name])
     }
     
     // 3. 친구 추가 로직 (초대 코드 입력)
     func addFriend(by inviteCode: String) async -> Bool {
-        guard let myUid = auth.currentUser?.uid else { return false }
+        guard let myUid = UserDefaults.standard.string(forKey: "userUID") else { return false }
         
         do {
             // 초대 코드로 유저 찾기

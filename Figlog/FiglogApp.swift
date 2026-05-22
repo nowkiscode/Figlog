@@ -43,7 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         FirebaseApp.configure()
         
         Task { @MainActor in
-            await FirebaseManager.shared.signInAnonymously()
+            await FirebaseManager.shared.setupUser()
         }
         
         NSApp.setActivationPolicy(.accessory)
