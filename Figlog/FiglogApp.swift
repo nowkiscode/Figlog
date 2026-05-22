@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AppKit
+import FirebaseCore
 
 @main
 struct FiglogApp: App {
@@ -39,6 +40,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var popover: NSPopover?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        FirebaseApp.configure()
+        
+        Task { @MainActor in
+            await FirebaseManager.shared.signInAnonymously()
+        }
+        
         NSApp.setActivationPolicy(.accessory)
 
         let popover = NSPopover()

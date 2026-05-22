@@ -16,6 +16,11 @@ struct ContentView: View {
     @State private var showingHistory = false
     @State private var showingHelp = false
     @State private var historyPeriod: Int = 30
+    
+    enum Tab {
+        case stats, social
+    }
+    @State private var selectedTab: Tab = .stats
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.2.0"
@@ -26,21 +31,35 @@ struct ContentView: View {
             if showingHistory {
                 historyView
             } else {
-                mainView
+                header
+                
+                Picker("", selection: $selectedTab) {
+                    Text(String(localized: "My Stats")).tag(Tab.stats)
+                    Text(String(localized: "Friends")).tag(Tab.social)
+                }
+                .pickerStyle(.segmented)
+                
+                if selectedTab == .stats {
+                    mainViewContent
+                } else {
+                    SocialView()
+                }
+                
+                Spacer(minLength: 0)
+                
+                footer
             }
         }
         .padding(24)
-        .frame(width: 420, height: 520)
+        .frame(width: 420, height: 520, alignment: .top)
     }
-
-    private var mainView: some View {
+    
+    private var mainViewContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            header
 
             VStack(alignment: .leading, spacing: 8) {
                 Text(tracker.formattedTodayFocusTime)
-                    .font(.system(size: 48, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
+                    .font(.system(size: 48, weight: .bold, design: .monospaced))
 
                 statusRow
             }
@@ -52,10 +71,6 @@ struct ContentView: View {
             timeline
 
             recentSessions
-
-            Spacer(minLength: 0)
-
-            footer
         }
     }
 

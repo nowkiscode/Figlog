@@ -50,6 +50,10 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
     private var activeSession: FocusSession?
     private var didSendBreakReminderForActiveSession = false
     private var currentDay = Calendar.current.startOfDay(for: Date())
+    
+    // Firebase Syncing
+    private var lastSyncedTrackingState: TrackingState?
+    private var lastFirebaseSyncDate: Date?
     private var hasEnteredFocusSession = false
     private var nonFigmaActivityDuration: TimeInterval = 0
 
@@ -368,6 +372,26 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
             print("⏳ Emergency autosave triggered")
             persistSnapshot()
             lastEmergencyAutosaveAt = now
+        }
+        
+        // Firebase Status Sync (Every 30 seconds or on state change)
+        let newState = self.trackingState
+        let stateChanged = lastSyncedTrackingState != newState
+        let timeSinceLastSync = lastFirebaseSyncDate.map { now.timeIntervalSince($0) } ?? 100
+        
+        if stateChanged || timeSinceLastSync >= 30 {
+            var statusString = "offline"
+            switch newState {
+            case .tracking, .activeOutsideFigma: statusString = "tracking"
+            case .idle: statusString = "idle"
+            case .paused: statusString = "paused"
+            case .waitingForFigma: statusString = "offline"
+            }
+            
+            FirebaseManager.shared.updateMyStatus(status: statusString, todayFocusTime: todayFocusTime)
+            
+            lastSyncedTrackingState = newState
+            lastFirebaseSyncDate = now
         }
     }
 
