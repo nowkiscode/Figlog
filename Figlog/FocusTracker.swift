@@ -46,7 +46,7 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
     private let gracePeriodKey = "FigLog.FocusTracker.NonFigmaGracePeriod"
     private let breakThresholdKey = "FigLog.FocusTracker.BreakReminderThreshold"
     private let sessionStore = FocusSessionStore()
-    private var timerCancellable: AnyCancellable?
+    private var timerTask: Task<Void, Never>?
     private var activeSession: FocusSession?
     private var didSendBreakReminderForActiveSession = false
     private var currentDay = Calendar.current.startOfDay(for: Date())
@@ -117,8 +117,8 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         let now = Date()
         endActiveSession(at: now)
         persistSnapshot()
-        timerCancellable?.cancel()
-        timerCancellable = nil
+        timerTask?.cancel()
+        timerTask = nil
     }
 
     private func handleDidWake() {
@@ -245,20 +245,23 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
     }
 
     func start() {
-        guard timerCancellable == nil else { return }
+        guard timerTask == nil else { return }
         lastTickDate = Date()
         lastEmergencyAutosaveAt = Date()
 
-        timerCancellable = Timer.publish(every: 1, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                self?.tick()
+        timerTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                await MainActor.run {
+                    self?.tick()
+                }
             }
+        }
     }
 
     func stop() {
-        timerCancellable?.cancel()
-        timerCancellable = nil
+        timerTask?.cancel()
+        timerTask = nil
 
         endActiveSession(at: Date())
         persistSnapshot()
@@ -268,7 +271,7 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         let now = Date()
         
         let delta = now.timeIntervalSince(lastTickDate)
-        if delta >= 3.0 {
+        if delta >= 60.0 {
             print("🛡️ Gap protection triggered: delta of \(String(format: "%.2f", delta)) seconds detected. Ending previous session at \(lastTickDate)")
             endActiveSession(at: lastTickDate)
             rollOverDayIfNeeded(now)
@@ -468,8 +471,8 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         
 
         let content = UNMutableNotificationContent()
-        content.title = "Time for a short break"
-        content.body = "You have focused in Figma for \(Self.formatCompactDuration(breakReminderThreshold))."
+        content.title = String(localized: "Time for a short break")
+        content.body = String(format: String(localized: "You have focused in Figma for %@."), Self.formatCompactDuration(breakReminderThreshold))
         content.sound = .default
         content.categoryIdentifier = "BREAK_REMINDER_CATEGORY"
 

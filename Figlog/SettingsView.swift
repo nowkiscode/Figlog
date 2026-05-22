@@ -67,7 +67,7 @@ struct SettingsView: View {
                             Text(formatDuration(duration)).tag(duration)
                         }
                     }
-                    Text("Time without activity before a session is marked idle.")
+                    Text(String(localized: "Time without activity before a session is marked idle."))
                         .font(.caption)
                         .foregroundColor(.secondary)
 
@@ -79,7 +79,7 @@ struct SettingsView: View {
                             Text(formatMinutes(duration)).tag(duration)
                         }
                     }
-                    Text("Time allowed outside Figma before a session ends.")
+                    Text(String(localized: "Time allowed outside Figma before a session ends."))
                         .font(.caption)
                         .foregroundColor(.secondary)
 
@@ -102,22 +102,16 @@ struct SettingsView: View {
             .padding(20)
             .frame(width: 400, height: 320)
             .tabItem {
-                Label("General", systemImage: "gear")
+                Label(String(localized: "General"), systemImage: "gear")
             }
         }
     }
 
     private func formatMinutes(_ duration: TimeInterval) -> String {
-        let minutes = Int(duration) / 60
-        return "\(minutes) minutes"
+        FocusTracker.formatCompactDuration(duration)
     }
 
     private func formatDuration(_ duration: TimeInterval) -> String {
-        let secs = Int(duration)
-        if secs >= 60 {
-            let mins = secs / 60
-            return mins == 1 ? "1 minute" : "\(mins) minutes"
-        }
-        return "\(secs) seconds"
+        FocusTracker.formatCompactDuration(duration)
     }
 }

@@ -33,6 +33,17 @@
         }
       }
     },
+    "After %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 후"
+          }
+        }
+      }
+    },
     "Allows you to switch to other apps briefly without breaking your current focus session. If you return to Figma within this time, the session continues uninterrupted. If not, the timer stops and deducts the grace period." : {
       "localizations" : {
         "ko" : {
@@ -92,7 +103,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Figma 유휴 상태"
+            "value" : "피그마 유휴 상태"
           }
         }
       }
@@ -103,7 +114,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Figma 비활성"
+            "value" : "피그마 포커스 해제"
           }
         }
       }
@@ -123,7 +134,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "유예 시간"
+            "value" : "피그마 이탈 허용 시간"
           }
         }
       }
@@ -176,18 +187,17 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "유휴 상태 전환 시간"
+            "value" : "유휴 상태 감지 기준"
           }
         }
       }
     },
     "Idle Today" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "오늘 유휴 시간"
+            "value" : "오늘 총 유휴 시간"
           }
         }
       }
@@ -203,6 +213,7 @@
       }
     },
     "Insights" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ko" : {
           "stringUnit" : {
@@ -257,7 +268,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "로그인 시 실행"
+            "value" : "로그인 시 자동 실행"
           }
         }
       }
@@ -297,7 +308,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "아직 오늘 Figma 집중 세션이 없습니다"
+            "value" : "아직 오늘의 피그마 집중 기록이 없습니다"
           }
         }
       }
@@ -353,7 +364,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "최근 세션"
+            "value" : "최근 집중 기록"
           }
         }
       }
@@ -363,7 +374,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "다음 시간 후 알림"
+            "value" : "알림 기준 시간"
           }
         }
       }
@@ -379,7 +390,6 @@
       }
     },
     "Sessions" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ko" : {
           "stringUnit" : {
@@ -414,7 +424,17 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "세션이 종료되기 전 Figma 이외의 앱을 사용할 수 있는 시간입니다."
+            "value" : "피그마가 아닌 다른 앱을 사용해도 이 시간 내에 돌아오면 집중 시간이 유지됩니다."
+          }
+        }
+      }
+    },
+    "Time for a short break" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "잠깐 쉬어갈 시간입니다"
           }
         }
       }
@@ -424,7 +444,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "활동이 없을 때 세션이 유휴 상태로 전환되는 기준 시간입니다."
+            "value" : "해당 시간 동안 마우스/키보드 입력이 없으면 유휴 상태(Idle)로 전환됩니다."
           }
         }
       }
@@ -475,7 +495,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "추적 일시정지됨"
+            "value" : "트래킹 일시정지"
           }
         }
       }
@@ -492,6 +512,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "주간"
+          }
+        }
+      }
+    },
+    "You have focused in Figma for %@." : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "피그마에서 %@ 동안 집중했습니다."
           }
         }
       }

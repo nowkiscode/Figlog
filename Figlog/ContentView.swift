@@ -65,17 +65,13 @@ struct ContentView: View {
                 Button(action: { showingHistory = false }) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
-                        Text("Back")
+                        Text(String(localized: "Back"))
                     }
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)
 
                 Spacer()
-                Text("Insights")
-                    .font(.headline)
-                Spacer()
-                Color.clear.frame(width: 40, height: 1)
             }
 
             HStack {
@@ -106,12 +102,16 @@ struct ContentView: View {
                 .font(.subheadline)
                 .fontWeight(.semibold)
 
-            if historyPeriod == 7 {
-                weeklyBarChart(stats: stats)
-                    .padding(.top, 16)
-            } else {
-                calendarHeatmap(stats: stats, period: historyPeriod)
+            VStack(alignment: .leading) {
+                if historyPeriod == 7 {
+                    weeklyBarChart(stats: stats)
+                        .padding(.top, 4)
+                } else {
+                    calendarHeatmap(stats: stats, period: historyPeriod)
+                        .padding(.top, 4)
+                }
             }
+            .frame(height: 160, alignment: .top)
             
             Spacer()
         }
@@ -185,10 +185,7 @@ struct ContentView: View {
     }
 
     private func shortDayLabel(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = locale
-        formatter.dateFormat = "E"
-        return formatter.string(from: date)
+        date.formatted(.dateTime.weekday(.abbreviated).locale(locale))
     }
 
     private func lastNDays(_ daysCount: Int) -> [Date] {
@@ -203,10 +200,7 @@ struct ContentView: View {
     }
 
     private func dayLabel(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = locale
-        formatter.dateFormat = "MMM d"
-        return formatter.string(from: date)
+        date.formatted(.dateTime.month(.abbreviated).day().locale(locale))
     }
 
     private var header: some View {
@@ -264,7 +258,7 @@ struct ContentView: View {
 
     private var footer: some View {
         HStack {
-            Text("Today")
+            Text(String(localized: "Today"))
                 .font(.caption)
                 .foregroundStyle(.tertiary)
 
@@ -292,7 +286,7 @@ struct ContentView: View {
                 .font(.caption)
                 .foregroundStyle(.tertiary)
 
-            Button("History") {
+            Button(String(localized: "History")) {
                 showingHistory = true
             }
             .buttonStyle(.borderless)
@@ -302,7 +296,7 @@ struct ContentView: View {
                 .font(.caption)
                 .foregroundStyle(.tertiary)
 
-            Button("Quit FigLog") {
+            Button(String(localized: "Quit FigLog")) {
                 NSApp.terminate(nil)
             }
             .buttonStyle(.borderless)
@@ -312,16 +306,16 @@ struct ContentView: View {
 
     private var statsRow: some View {
         HStack(spacing: 12) {
-            statBlock(title: "Sessions", value: "\(tracker.todaySessionCount)")
-            statBlock(title: "Idle Today", value: FocusTracker.formatCompactDuration(tracker.todayIdleTime))
-            statBlock(title: "Idle after", value: tracker.formattedIdleThreshold)
+            statBlock(title: String(localized: "Sessions"), value: "\(tracker.todaySessionCount)")
+            statBlock(title: String(localized: "Idle Today"), value: FocusTracker.formatCompactDuration(tracker.todayIdleTime))
+            statBlock(title: String(localized: "Idle after"), value: tracker.formattedIdleThreshold)
         }
     }
 
     private var timeline: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Timeline")
+                Text(String(localized: "Timeline"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -344,7 +338,7 @@ struct ContentView: View {
 
     private var recentSessions: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Recent Sessions")
+            Text(String(localized: "Recent Sessions"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -355,7 +349,7 @@ struct ContentView: View {
                     }
                 }
             } else {
-                Text("No Figma focus sessions yet today")
+                Text(String(localized: "No Figma focus sessions yet today"))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .frame(height: 54, alignment: .topLeading)
@@ -398,7 +392,6 @@ struct ContentView: View {
             Text(FocusTracker.formatTimeRange(for: session))
                 .font(.caption)
                 .monospacedDigit()
-
             Spacer()
 
             Text(FocusTracker.formatCompactDuration(session.duration))
@@ -549,37 +542,37 @@ private struct TimelineStrip: View {
 struct HelpView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(String(localized: "How to use FigLog"))
+            Text("How to use FigLog")
                 .font(.headline)
             
             VStack(alignment: .leading, spacing: 8) {
-                Text(String(localized: "Timeline Colors:"))
+                Text("Timeline Colors:")
                     .font(.subheadline).bold()
                 HStack {
                     Circle().fill(.green).frame(width: 8, height: 8)
-                    Text(String(localized: "Green: Currently tracking Figma session"))
+                    Text("Green: Currently tracking Figma session")
                 }
                 HStack {
                     Circle().fill(Color.accentColor).frame(width: 8, height: 8)
-                    Text(String(localized: "Blue: Completed focus session (> 15m)"))
+                    Text("Blue: Completed focus session (> 15m)")
                 }
                 HStack {
                     Circle().fill(Color.accentColor.opacity(0.7)).frame(width: 8, height: 8)
-                    Text(String(localized: "Light Blue: Short focus session (< 15m)"))
+                    Text("Light Blue: Short focus session (< 15m)")
                 }
             }
             
             VStack(alignment: .leading, spacing: 8) {
-                Text(String(localized: "Grace Period:"))
+                Text("Grace Period:")
                     .font(.subheadline).bold()
-                Text(String(localized: "Allows you to switch to other apps briefly without breaking your current focus session. If you return to Figma within this time, the session continues uninterrupted. If not, the timer stops and deducts the grace period."))
+                Text("Allows you to switch to other apps briefly without breaking your current focus session. If you return to Figma within this time, the session continues uninterrupted. If not, the timer stops and deducts the grace period.")
                     .fixedSize(horizontal: false, vertical: true)
             }
             
             VStack(alignment: .leading, spacing: 8) {
-                Text(String(localized: "Pause/Resume:"))
+                Text("Pause/Resume:")
                     .font(.subheadline).bold()
-                Text(String(localized: "Manually pause tracking if you want to keep Figma open but stop the timer. It will automatically resume the next time you actively use Figma."))
+                Text("Manually pause tracking if you want to keep Figma open but stop the timer. It will automatically resume the next time you actively use Figma.")
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
