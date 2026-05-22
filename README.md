@@ -1,4 +1,4 @@
-# 🎨 Figlog (피그로그)
+# Figlog
 
 > **Figma에서의 실제 작업 시간을 스마트하게 기록하는 macOS 메뉴바 앱**
 >
@@ -7,17 +7,14 @@
 ---
 
 ## 📥 설치 방법 (Installation)
-
-> [!IMPORTANT]
-> **설치 링크 수정 안내**
-> 아래 링크의 `YOUR_DOWNLOAD_URL_HERE` 부분을 실제 다운로드 링크(예: GitHub Release의 `.dmg` 또는 `.app` 다운로드 경로)로 변경하여 사용하세요.
-
-### [👉 Figlog 최신 버전 다운로드 (Download Latest Version) 👈](YOUR_DOWNLOAD_URL_HERE)
+### [👉 Figlog 최신 버전 다운로드 (Download Latest Version) 👈](https://drive.google.com/file/d/1oCJsITSRtXmA9hLBvTi2aVJR1Udiv-yJ/view?usp=sharing)
 
 1. 위의 **다운로드 링크**를 클릭하여 설치 파일을 다운로드합니다.
 2. 다운로드된 `Figlog.app` 파일을 **애플리케이션(Applications)** 폴더로 드래그 앤 드롭합니다.
-3. 앱을 실행하면 macOS 상단 메뉴바에 Figlog 아이콘(👀)이 표시됩니다.
-4. *참고: 최초 실행 시 Figma의 활성화 여부를 감지하기 위해 **손쉬운 사용(Accessibility)** 권한 허용이 필요할 수 있습니다.*
+3. 앱 실행시 보안관련 메세지가 팝업되며 실행을 막을수 있습니다. 그대로 닫기를 클릭해주세요.
+4. 설정 -> 보안에서 밑으로 스크롤하면 Figlog 허용에 관한 섹션이 있습니다. 허용해주세요.
+5. 앱을 실행하면 macOS 상단 메뉴바에 Figlog 아이콘이 표시됩니다.
+6. *참고: 최초 실행 시 Figma의 활성화 여부를 감지하기 위해 **손쉬운 사용(Accessibility)** 권한 허용이 필요할 수 있습니다.*
 
 ---
 
@@ -39,39 +36,6 @@
 * **Break Reminder**: 일정 시간 연속으로 작업할 경우, 건강을 위해 휴식을 취하도록 리마인더를 띄워줍니다.
 
 ---
-
-## 🛠️ 개발 현황 (Current Status)
-
-로컬에서의 데이터 무결성과 트래킹 안정성을 극대화하기 위해 다음과 같은 핵심 아키텍처 개선을 완료했습니다.
-
-* **안정적인 파일 기반 JSON 저장소**:
-  * 기존 `UserDefaults` 방식에서 탈피하여 파일 시스템(`Application Support/com.figlog.Desktop/records/`) 기반의 구조화된 JSON 영속성 스토리지를 구축했습니다.
-* **이중 안전 저장 메커니즘**:
-  * 작업 중 세션 데이터 분실을 막기 위해 핵심 이벤트 기반 실시간 저장(Event-driven Save)과 5분 주기의 안전 자동 저장(Safety Autosave)을 병행합니다.
-* **시스템 슬립/웨이크 보호 (Delta-Tick)**:
-  * 맥이 잠자기 모드(Sleep)로 들어가거나 깨어날 때(Wake) 발생할 수 있는 시간 측정 왜곡(Gap)을 감지하고, 3초 임계값을 초과하는 비정상 시간 누적을 완벽히 차단합니다.
-* **UI/UX 폴리싱**:
-  * 타임라인 간격 병합 및 호버 가이드 툴팁 추가, 설정창 UI 마진 조정을 완료하여 깔끔한 레이아웃을 제공합니다.
-  * 설정 변경 시 디버그 로그가 명확하게 출력되도록 검증 시스템을 구성했습니다.
-
----
-
-## 🚀 추후 계획 (Roadmap)
-
-Figlog는 로컬 안정성 확보를 시작으로, 시각적 통계 정보 제공과 협업을 위한 소셜 기능까지 점진적으로 확장할 예정입니다.
-
-- [ ] **1단계: 안정화 기간 유지 및 모니터링**
-  * 다양한 슬립/웨이크 케이스에 대한 엣지 케이스 추가 검증
-  * 메모리 누수(Memory Leak) 프로파일링 및 세션 무결성 검증
-- [ ] **2단계: 히스토리 & 주간 리포트 UI (Weekly Insights)**
-  * 지난 며칠 혹은 몇 주간의 집중 트렌드를 차트와 통계로 돌아볼 수 있는 피드백 UI 추가
-- [ ] **3단계: 메뉴바 세부 디테일 폴리싱**
-  * 메뉴바 아이콘 상태 변화 애니메이션, 단축키 지원 등 UX 개선
-- [ ] **4단계: Firebase 기반의 친구 간 실시간 상태(Presence) 공유**
-  * 서버 비용을 최소화하는 서버리스/Firebase 기반으로, 함께 작업하는 팀원들이 현재 Figma에 접속하여 작업 중인지 실시간으로 상태를 공유하는 기능 추가
-
----
-
 ## 📄 라이선스 (License)
 
 This project is licensed under the MIT License.
