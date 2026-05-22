@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SocialView: View {
-    @StateObject private var firebase = FirebaseManager.shared
+    @ObservedObject private var firebase = FirebaseManager.shared
     @State private var inviteCodeInput = ""
     @State private var isShowingEditName = false
     @State private var newName = ""
@@ -29,6 +29,12 @@ struct SocialView: View {
                 
                 friendsListSection
             }
+        }
+        .onAppear {
+            firebase.startListeningToFriends()
+        }
+        .onDisappear {
+            firebase.stopListeningToFriends()
         }
     }
     

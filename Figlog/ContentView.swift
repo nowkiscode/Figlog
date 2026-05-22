@@ -16,6 +16,7 @@ struct ContentView: View {
     @State private var showingHistory = false
     @State private var showingHelp = false
     @State private var historyPeriod: Int = 30
+    @State private var cachedStats: [DailyFocusRecord] = []
     
     enum Tab {
         case stats, social
@@ -52,6 +53,19 @@ struct ContentView: View {
         }
         .padding(24)
         .frame(width: 420, height: 520, alignment: .top)
+        .onChange(of: showingHistory) { newValue in
+            if newValue {
+                Task { await loadStats() }
+            }
+        }
+    }
+    
+    private func loadStats() async {
+        let period = historyPeriod
+        let newStats = await Task.detached {
+            self.tracker.getStats(days: period)
+        }.value
+        self.cachedStats = newStats
     }
     
     private var mainViewContent: some View {
@@ -96,11 +110,14 @@ struct ContentView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 160)
+                .onChange(of: historyPeriod) { _ in
+                    Task { await loadStats() }
+                }
                 Spacer()
             }
             .padding(.bottom, 4)
 
-            let stats = tracker.getStats(days: historyPeriod)
+            let stats = cachedStats
             let totalTime = stats.reduce(0) { $1.totalFocusTime + $0 }
             let totalIdle = stats.reduce(0) { $1.totalIdleTime + $0 }
             let periodTitle = historyPeriod == 7 ? String(localized: "Last 7 Days") : String(localized: "Last 30 Days")
@@ -425,8 +442,6 @@ private struct TimelineStrip: View {
     let dayEnd: Date
     let isTracking: Bool
 
-    @State private var hoveredSegmentId: UUID? = nil
-
     struct TimelineSegment: Identifiable {
         let id: UUID
         let startedAt: Date
@@ -482,23 +497,12 @@ private struct TimelineStrip: View {
                 }
 
                 ForEach(processedSegments) { segment in
-                    let isHovered = hoveredSegmentId == segment.id
-                    
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(segmentColor(for: segment))
-                        .frame(
-                            width: segmentWidth(for: segment, totalWidth: proxy.size.width),
-                            height: isHovered ? 14 : 12
-                        )
-                        .offset(
-                            x: segmentOffset(for: segment, totalWidth: proxy.size.width),
-                            y: isHovered ? .zero : -1
-                        )
-                        .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isHovered)
-                        .help(tooltipText(for: segment))
-                        .onHover { hovering in
-                            hoveredSegmentId = hovering ? segment.id : nil
-                        }
+                    TimelineSegmentView(
+                        segment: segment,
+                        dayStart: dayStart,
+                        dayEnd: dayEnd,
+                        totalWidth: proxy.size.width
+                    )
                 }
                 
                 // Current Time Indicator
@@ -514,7 +518,35 @@ private struct TimelineStrip: View {
         .frame(height: 14)
     }
 
-    private func segmentColor(for segment: TimelineSegment) -> Color {
+}
+
+private struct TimelineSegmentView: View {
+    let segment: TimelineStrip.TimelineSegment
+    let dayStart: Date
+    let dayEnd: Date
+    let totalWidth: CGFloat
+
+    @State private var isHovered = false
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 2)
+            .fill(segmentColor(for: segment))
+            .frame(
+                width: segmentWidth(for: segment, totalWidth: totalWidth),
+                height: isHovered ? 14 : 12
+            )
+            .offset(
+                x: segmentOffset(for: segment, totalWidth: totalWidth),
+                y: isHovered ? .zero : -1
+            )
+            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isHovered)
+            .help(tooltipText(for: segment))
+            .onHover { hovering in
+                isHovered = hovering
+            }
+    }
+
+    private func segmentColor(for segment: TimelineStrip.TimelineSegment) -> Color {
         if segment.isCurrent {
             return .green
         }
@@ -524,7 +556,7 @@ private struct TimelineStrip: View {
         return Color.accentColor.opacity(0.7)
     }
 
-    private func tooltipText(for segment: TimelineSegment) -> String {
+    private func tooltipText(for segment: TimelineStrip.TimelineSegment) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
         let start = formatter.string(from: segment.startedAt)
@@ -533,7 +565,7 @@ private struct TimelineStrip: View {
         return "\(start) - \(end) (\(durationStr))"
     }
 
-    private func segmentOffset(for segment: TimelineSegment, totalWidth: CGFloat) -> CGFloat {
+    private func segmentOffset(for segment: TimelineStrip.TimelineSegment, totalWidth: CGFloat) -> CGFloat {
         let dayDuration = max(1, dayEnd.timeIntervalSince(dayStart))
         let secondsFromStart = max(0, segment.startedAt.timeIntervalSince(dayStart))
         let ratio = min(1, secondsFromStart / dayDuration)
@@ -541,7 +573,7 @@ private struct TimelineStrip: View {
         return totalWidth * ratio
     }
 
-    private func segmentWidth(for segment: TimelineSegment, totalWidth: CGFloat) -> CGFloat {
+    private func segmentWidth(for segment: TimelineStrip.TimelineSegment, totalWidth: CGFloat) -> CGFloat {
         let dayDuration = max(1, dayEnd.timeIntervalSince(dayStart))
         let rawWidth = totalWidth * max(0, segment.duration) / dayDuration
 

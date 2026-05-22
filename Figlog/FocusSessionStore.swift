@@ -7,15 +7,14 @@
 
 import Foundation
 
-struct DailyFocusRecord: Codable {
+struct DailyFocusRecord: Codable, Sendable {
     let day: Date
     var totalFocusTime: TimeInterval
     var totalIdleTime: TimeInterval = 0
     var sessions: [FocusSession]
 }
 
-@MainActor
-final class FocusSessionStore {
+final class FocusSessionStore: @unchecked Sendable {
 
     private let storageKey = "FigLog.FocusSessionStore.Records"
 

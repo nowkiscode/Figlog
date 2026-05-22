@@ -253,7 +253,7 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         lastTickDate = Date()
         lastEmergencyAutosaveAt = Date()
 
-        timerTask = Task { [weak self] in
+        timerTask = Task.detached { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 await MainActor.run {
@@ -269,6 +269,8 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
 
         endActiveSession(at: Date())
         persistSnapshot()
+        
+        FirebaseManager.shared.updateMyStatus(status: "offline", todayFocusTime: todayFocusTime)
     }
 
     private func tick() {
@@ -324,6 +326,12 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         }
 
         if isFigmaActive && !isIdle {
+            if hasEnteredFocusSession && nonFigmaActivityDuration > 0 {
+                todayFocusTime += nonFigmaActivityDuration
+                if activeSession != nil {
+                    activeSession?.duration += nonFigmaActivityDuration
+                }
+            }
             hasEnteredFocusSession = true
             nonFigmaActivityDuration = 0
         }
@@ -340,21 +348,14 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
                 isTracking = false
                 hasEnteredFocusSession = false
                 
-                // Backdate the session end time and subtract the grace period from total focus time
-                todayFocusTime -= nonFigmaGracePeriod
-                todayFocusTime = max(0, todayFocusTime)
-                
                 let backdatedEnd = now.addingTimeInterval(-nonFigmaGracePeriod)
-                if var session = activeSession {
-                    session.duration -= nonFigmaGracePeriod
-                    session.duration = max(0, session.duration)
-                    activeSession = session
-                }
                 endActiveSession(at: backdatedEnd)
             } else {
                 isTracking = true
-                todayFocusTime += 1
-                updateActiveSession(at: now)
+                if isFigmaActive {
+                    todayFocusTime += 1
+                    updateActiveSession(at: now)
+                }
             }
 
         } else {
@@ -374,12 +375,12 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
             lastEmergencyAutosaveAt = now
         }
         
-        // Firebase Status Sync (Every 30 seconds or on state change)
+        // Firebase Status Sync (Every 5 minutes or on state change)
         let newState = self.trackingState
         let stateChanged = lastSyncedTrackingState != newState
         let timeSinceLastSync = lastFirebaseSyncDate.map { now.timeIntervalSince($0) } ?? 100
         
-        if stateChanged || timeSinceLastSync >= 30 {
+        if stateChanged || timeSinceLastSync >= 300 {
             var statusString = "offline"
             switch newState {
             case .tracking, .activeOutsideFigma: statusString = "tracking"
@@ -478,7 +479,7 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         )
     }
 
-    func getStats(days: Int = 30) -> [DailyFocusRecord] {
+    nonisolated func getStats(days: Int = 30) -> [DailyFocusRecord] {
         sessionStore.loadRecordsForLast(days: days)
     }
 
@@ -542,7 +543,11 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
     }
 
     static func formatCompactDuration(_ duration: TimeInterval) -> String {
-        let totalMinutes = max(1, Int(duration) / 60)
+        if duration < 60 {
+            return "\(Int(duration))s"
+        }
+        
+        let totalMinutes = Int(duration) / 60
         let hours = totalMinutes / 60
         let minutes = totalMinutes % 60
 
