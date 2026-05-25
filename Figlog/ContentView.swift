@@ -24,7 +24,7 @@ struct ContentView: View {
     @State private var selectedTab: Tab = .stats
 
     private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.2.0"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.2.2"
     }
 
     var body: some View {
@@ -35,8 +35,8 @@ struct ContentView: View {
                 header
                 
                 Picker("", selection: $selectedTab) {
-                    Text(String(localized: "My Stats")).tag(Tab.stats)
-                    Text(String(localized: "Friends")).tag(Tab.social)
+                    Text("My Stats").tag(Tab.stats)
+                    Text("Friends").tag(Tab.social)
                 }
                 .pickerStyle(.segmented)
                 
@@ -53,7 +53,7 @@ struct ContentView: View {
         }
         .padding(24)
         .frame(width: 420, height: 520, alignment: .top)
-        .onChange(of: showingHistory) { newValue in
+        .onChange(of: showingHistory) { _, newValue in
             if newValue {
                 Task { await loadStats() }
             }
@@ -62,9 +62,7 @@ struct ContentView: View {
     
     private func loadStats() async {
         let period = historyPeriod
-        let newStats = await Task.detached {
-            self.tracker.getStats(days: period)
-        }.value
+        let newStats = tracker.getStats(days: period)
         self.cachedStats = newStats
     }
     
@@ -94,7 +92,7 @@ struct ContentView: View {
                 Button(action: { showingHistory = false }) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
-                        Text(String(localized: "Back"))
+                        Text("Back")
                     }
                 }
                 .buttonStyle(.borderless)
@@ -105,12 +103,12 @@ struct ContentView: View {
 
             HStack {
                 Picker("", selection: $historyPeriod) {
-                    Text(String(localized: "Weekly")).tag(7)
-                    Text(String(localized: "Monthly")).tag(30)
+                    Text("Weekly").tag(7)
+                    Text("Monthly").tag(30)
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 160)
-                .onChange(of: historyPeriod) { _ in
+                .onChange(of: historyPeriod) { _, _ in
                     Task { await loadStats() }
                 }
                 Spacer()
@@ -120,17 +118,17 @@ struct ContentView: View {
             let stats = cachedStats
             let totalTime = stats.reduce(0) { $1.totalFocusTime + $0 }
             let totalIdle = stats.reduce(0) { $1.totalIdleTime + $0 }
-            let periodTitle = historyPeriod == 7 ? String(localized: "Last 7 Days") : String(localized: "Last 30 Days")
+            let periodTitle: LocalizedStringKey = historyPeriod == 7 ? "Last 7 Days" : "Last 30 Days"
             
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 40) {
                     statBlock(title: periodTitle, value: FocusTracker.formatCompactDuration(totalTime))
-                    statBlock(title: String(localized: "Idle Total"), value: FocusTracker.formatCompactDuration(totalIdle))
+                    statBlock(title: "Idle Total", value: FocusTracker.formatCompactDuration(totalIdle))
                 }
             }
             .padding(.vertical, 8)
 
-            Text(String(localized: "Activity Heatmap"))
+            Text("Activity Heatmap")
                 .font(.subheadline)
                 .fontWeight(.semibold)
 
@@ -282,7 +280,7 @@ struct ContentView: View {
                 .fill(statusColor)
                 .frame(width: 9, height: 9)
 
-            Text(tracker.statusText)
+            Text(LocalizedStringKey(tracker.statusText))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -290,7 +288,7 @@ struct ContentView: View {
 
     private var footer: some View {
         HStack {
-            Text(String(localized: "Today"))
+            Text("Today")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
 
@@ -318,7 +316,7 @@ struct ContentView: View {
                 .font(.caption)
                 .foregroundStyle(.tertiary)
 
-            Button(String(localized: "History")) {
+            Button("History") {
                 showingHistory = true
             }
             .buttonStyle(.borderless)
@@ -328,7 +326,7 @@ struct ContentView: View {
                 .font(.caption)
                 .foregroundStyle(.tertiary)
 
-            Button(String(localized: "Quit FigLog")) {
+            Button("Quit FigLog") {
                 NSApp.terminate(nil)
             }
             .buttonStyle(.borderless)
@@ -338,16 +336,16 @@ struct ContentView: View {
 
     private var statsRow: some View {
         HStack(spacing: 12) {
-            statBlock(title: String(localized: "Sessions"), value: "\(tracker.todaySessionCount)")
-            statBlock(title: String(localized: "Idle Today"), value: FocusTracker.formatCompactDuration(tracker.todayIdleTime))
-            statBlock(title: String(localized: "Idle after"), value: tracker.formattedIdleThreshold)
+            statBlock(title: "Sessions", value: "\(tracker.todaySessionCount)")
+            statBlock(title: "Idle Today", value: FocusTracker.formatCompactDuration(tracker.todayIdleTime))
+            statBlock(title: "Idle after", value: tracker.formattedIdleThreshold)
         }
     }
 
     private var timeline: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(String(localized: "Timeline"))
+                Text("Timeline")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -370,7 +368,7 @@ struct ContentView: View {
 
     private var recentSessions: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "Recent Sessions"))
+            Text("Recent Sessions")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -381,7 +379,7 @@ struct ContentView: View {
                     }
                 }
             } else {
-                Text(String(localized: "No Figma focus sessions yet today"))
+                Text("No Figma focus sessions yet today")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .frame(height: 54, alignment: .topLeading)
@@ -402,7 +400,7 @@ struct ContentView: View {
         return .gray
     }
 
-    private func statBlock(title: String, value: String) -> some View {
+    private func statBlock(title: LocalizedStringKey, value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.caption)

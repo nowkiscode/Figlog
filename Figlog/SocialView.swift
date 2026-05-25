@@ -12,7 +12,7 @@ struct SocialView: View {
         VStack(spacing: 20) {
             if firebase.currentUserProfile == nil {
                 VStack(spacing: 8) {
-                    ProgressView(String(localized: "Connecting..."))
+                    ProgressView("Connecting...")
                     if !firebase.debugError.isEmpty {
                         Text(firebase.debugError)
                             .font(.caption)
@@ -43,7 +43,7 @@ struct SocialView: View {
 
     private var myProfileSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "My Profile"))
+            Text("My Profile")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             
@@ -54,7 +54,7 @@ struct SocialView: View {
                         .onSubmit {
                             saveName()
                         }
-                    Button(String(localized: "Save")) {
+                    Button("Save") {
                         saveName()
                     }
                 } else {
@@ -85,7 +85,7 @@ struct SocialView: View {
                     TextField(String(localized: "New Party Name"), text: $newPartyName)
                         .textFieldStyle(.roundedBorder)
                     
-                    Button(String(localized: "Create")) {
+                    Button("Create") {
                         Task {
                             let success = await firebase.createParty(name: newPartyName)
                             if success {
@@ -97,7 +97,7 @@ struct SocialView: View {
                     .buttonStyle(.borderedProminent)
                     .disabled(newPartyName.trimmingCharacters(in: .whitespaces).isEmpty)
                     
-                    Button(String(localized: "Cancel")) {
+                    Button("Cancel") {
                         isCreatingParty = false
                     }
                     .buttonStyle(.bordered)
@@ -108,7 +108,7 @@ struct SocialView: View {
                         .textFieldStyle(.roundedBorder)
                         .font(.system(.body, design: .monospaced))
                     
-                    Button(String(localized: "Join")) {
+                    Button("Join") {
                         Task {
                             let success = await firebase.joinParty(code: partyCodeInput)
                             if success {
@@ -119,7 +119,7 @@ struct SocialView: View {
                     .buttonStyle(.borderedProminent)
                     .disabled(partyCodeInput.trimmingCharacters(in: .whitespaces).isEmpty)
                     
-                    Button(String(localized: "Create Party")) {
+                    Button("Create Party") {
                         isCreatingParty = true
                     }
                     .buttonStyle(.bordered)
@@ -131,7 +131,7 @@ struct SocialView: View {
     private var partiesListSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(String(localized: "My Parties"))
+                Text("My Parties")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 
@@ -144,11 +144,11 @@ struct SocialView: View {
                         .font(.caption)
                 }
                 .buttonStyle(.borderless)
-                .help(String(localized: "Refresh Parties"))
+                .help("Refresh Parties")
             }
             
             if firebase.myParties.isEmpty {
-                Text(String(localized: "You haven't joined any parties yet."))
+                Text("You haven't joined any parties yet.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -183,11 +183,11 @@ struct SocialView: View {
                             NSPasteboard.general.setString(code, forType: .string)
                         }
                     }
-                    .help(String(localized: "Click to copy code"))
+                    .help("Click to copy code")
                 
                 Spacer()
                 
-                Button(String(localized: "Leave")) {
+                Button("Leave") {
                     if let code = party.id {
                         Task {
                             await firebase.leaveParty(code: code)
@@ -201,7 +201,7 @@ struct SocialView: View {
             
             let members = party.members.compactMap { firebase.profilesCache[$0] }.sorted { $0.displayName < $1.displayName }
             if members.isEmpty {
-                Text(String(localized: "Loading members..."))
+                Text("Loading members...")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             } else {
@@ -238,7 +238,7 @@ struct SocialView: View {
                 Text(FocusTracker.formatCompactDuration(friend.todayFocusTime))
                     .font(.subheadline)
                     .monospacedDigit()
-                Text(String(localized: "Today"))
+                Text("Today")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
@@ -264,6 +264,7 @@ struct SocialView: View {
         case "tracking": return .green
         case "idle": return .yellow
         case "paused": return .orange
+        case "waiting": return .gray
         case "offline": return .gray
         default: return .gray
         }
@@ -272,15 +273,16 @@ struct SocialView: View {
     private func statusText(for friend: UserProfile) -> String {
         // If last updated more than 10 minutes ago (600 seconds), consider offline
         if Date().timeIntervalSince(friend.lastUpdatedAt) > 600 {
-            return String(localized: "Offline")
+            return "Offline"
         }
         
         switch friend.status {
-        case "tracking": return String(localized: "Focusing in Figma")
-        case "idle": return String(localized: "Idle")
-        case "paused": return String(localized: "Paused")
-        case "offline": return String(localized: "Offline")
-        default: return String(localized: "Offline")
+        case "tracking": return "Focusing in Figma"
+        case "idle": return "Idle"
+        case "paused": return "Paused"
+        case "waiting": return "Waiting for Figma"
+        case "offline": return "Offline"
+        default: return "Offline"
         }
     }
 }

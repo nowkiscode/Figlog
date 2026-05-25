@@ -159,15 +159,15 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
     var statusText: String {
         switch trackingState {
         case .paused:
-            return String(localized: "Paused")
+            return "Paused"
         case .tracking:
-            return String(localized: "Tracking Figma")
+            return "Tracking Figma"
         case .activeOutsideFigma:
-            return String(localized: "Out of Figma but still tracking")
+            return "Out of Figma but still tracking"
         case .idle:
-            return String(localized: "Idle")
+            return "Idle"
         case .waitingForFigma:
-            return String(localized: "Waiting for Figma")
+            return "Waiting for Figma"
         }
     }
 
@@ -253,12 +253,10 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         lastTickDate = Date()
         lastEmergencyAutosaveAt = Date()
 
-        timerTask = Task.detached { [weak self] in
+        timerTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
-                await MainActor.run {
-                    self?.tick()
-                }
+                self?.tick()
             }
         }
     }
@@ -386,7 +384,7 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
             case .tracking, .activeOutsideFigma: statusString = "tracking"
             case .idle: statusString = "idle"
             case .paused: statusString = "paused"
-            case .waitingForFigma: statusString = "offline"
+            case .waitingForFigma: statusString = "waiting"
             }
             
             FirebaseManager.shared.updateMyStatus(status: statusString, todayFocusTime: todayFocusTime)
@@ -479,7 +477,7 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         )
     }
 
-    nonisolated func getStats(days: Int = 30) -> [DailyFocusRecord] {
+    func getStats(days: Int = 30) -> [DailyFocusRecord] {
         sessionStore.loadRecordsForLast(days: days)
     }
 
