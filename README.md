@@ -7,7 +7,7 @@
 ---
 
 ## 📥 설치 방법 (Installation)
-### [👉 Figlog 최신 버전 다운로드 (Download Latest Version) 👈](https://drive.google.com/file/d/1oCJsITSRtXmA9hLBvTi2aVJR1Udiv-yJ/view?usp=sharing)
+### [👉 Figlog 최신 버전 다운로드 (Download Latest Version) 👈](https://github.com/nowkiscode/Figlog/releases/tag/Figlog-release)
 
 1. 위의 **다운로드 링크**를 클릭하여 설치 파일을 다운로드합니다.
 2. 다운로드된 `Figlog.app` 파일을 **애플리케이션(Applications)** 폴더로 드래그 앤 드롭합니다.
