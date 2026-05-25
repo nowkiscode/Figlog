@@ -2,7 +2,9 @@ import SwiftUI
 
 struct SocialView: View {
     @ObservedObject private var firebase = FirebaseManager.shared
-    @State private var inviteCodeInput = ""
+    @State private var partyCodeInput = ""
+    @State private var newPartyName = ""
+    @State private var isCreatingParty = false
     @State private var isShowingEditName = false
     @State private var newName = ""
     
@@ -25,16 +27,16 @@ struct SocialView: View {
                 
                 Divider()
                 
-                addFriendSection
+                partyManagementSection
                 
-                friendsListSection
+                partiesListSection
             }
         }
         .onAppear {
-            firebase.startListeningToFriends()
+            firebase.startListeningToParties()
         }
         .onDisappear {
-            firebase.stopListeningToFriends()
+            firebase.stopListeningToParties()
         }
     }
     
@@ -69,27 +71,6 @@ struct SocialView: View {
                 }
                 
                 Spacer()
-                
-                VStack(alignment: .trailing) {
-                    Text(String(localized: "Invite Code"))
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                    HStack(spacing: 4) {
-                        Text(firebase.currentUserProfile?.inviteCode ?? "")
-                            .font(.system(.body, design: .monospaced, weight: .bold))
-                            .textSelection(.enabled)
-                        Button(action: {
-                            if let code = firebase.currentUserProfile?.inviteCode {
-                                NSPasteboard.general.clearContents()
-                                NSPasteboard.general.setString(code, forType: .string)
-                            }
-                        }) {
-                            Image(systemName: "doc.on.doc")
-                                .font(.caption)
-                        }
-                        .buttonStyle(.borderless)
-                    }
-                }
             }
         }
         .padding(12)
@@ -97,42 +78,86 @@ struct SocialView: View {
         .cornerRadius(8)
     }
     
-    private var addFriendSection: some View {
-        HStack {
-            TextField(String(localized: "Friend's Invite Code"), text: $inviteCodeInput)
-                .textFieldStyle(.roundedBorder)
-                .font(.system(.body, design: .monospaced))
-            
-            Button(String(localized: "Add Friend")) {
-                Task {
-                    let success = await firebase.addFriend(by: inviteCodeInput)
-                    if success {
-                        inviteCodeInput = ""
+    private var partyManagementSection: some View {
+        VStack(spacing: 12) {
+            if isCreatingParty {
+                HStack {
+                    TextField(String(localized: "New Party Name"), text: $newPartyName)
+                        .textFieldStyle(.roundedBorder)
+                    
+                    Button(String(localized: "Create")) {
+                        Task {
+                            let success = await firebase.createParty(name: newPartyName)
+                            if success {
+                                newPartyName = ""
+                                isCreatingParty = false
+                            }
+                        }
                     }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(newPartyName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    
+                    Button(String(localized: "Cancel")) {
+                        isCreatingParty = false
+                    }
+                    .buttonStyle(.bordered)
+                }
+            } else {
+                HStack {
+                    TextField(String(localized: "Enter Party Code"), text: $partyCodeInput)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(.body, design: .monospaced))
+                    
+                    Button(String(localized: "Join")) {
+                        Task {
+                            let success = await firebase.joinParty(code: partyCodeInput)
+                            if success {
+                                partyCodeInput = ""
+                            }
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(partyCodeInput.trimmingCharacters(in: .whitespaces).isEmpty)
+                    
+                    Button(String(localized: "Create Party")) {
+                        isCreatingParty = true
+                    }
+                    .buttonStyle(.bordered)
                 }
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(inviteCodeInput.trimmingCharacters(in: .whitespaces).isEmpty)
         }
     }
     
-    private var friendsListSection: some View {
+    private var partiesListSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "Friend Status"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            HStack {
+                Text(String(localized: "My Parties"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Spacer()
+                
+                Button(action: {
+                    firebase.refreshParties()
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.caption)
+                }
+                .buttonStyle(.borderless)
+                .help(String(localized: "Refresh Parties"))
+            }
             
-            if firebase.friendsProfiles.isEmpty {
-                Text(String(localized: "No friends added yet."))
+            if firebase.myParties.isEmpty {
+                Text(String(localized: "You haven't joined any parties yet."))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 10)
             } else {
                 ScrollView {
-                    VStack(spacing: 12) {
-                        ForEach(firebase.friendsProfiles) { friend in
-                            friendRow(friend)
+                    VStack(spacing: 16) {
+                        ForEach(firebase.myParties) { party in
+                            partySection(party)
                         }
                     }
                 }
@@ -140,17 +165,69 @@ struct SocialView: View {
         }
     }
     
+    private func partySection(_ party: Party) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(party.name)
+                    .font(.headline)
+                
+                Text(party.id ?? "")
+                    .font(.system(.caption, design: .monospaced, weight: .bold))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.secondary.opacity(0.2))
+                    .cornerRadius(4)
+                    .onTapGesture {
+                        if let code = party.id {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(code, forType: .string)
+                        }
+                    }
+                    .help(String(localized: "Click to copy code"))
+                
+                Spacer()
+                
+                Button(String(localized: "Leave")) {
+                    if let code = party.id {
+                        Task {
+                            await firebase.leaveParty(code: code)
+                        }
+                    }
+                }
+                .font(.caption)
+                .buttonStyle(.borderless)
+                .foregroundStyle(.red)
+            }
+            
+            let members = party.members.compactMap { firebase.profilesCache[$0] }.sorted { $0.displayName < $1.displayName }
+            if members.isEmpty {
+                Text(String(localized: "Loading members..."))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(members) { member in
+                        friendRow(member)
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(Color.secondary.opacity(0.05))
+        .cornerRadius(8)
+    }
+    
     private func friendRow(_ friend: UserProfile) -> some View {
         HStack(spacing: 12) {
             Circle()
-                .fill(statusColor(for: friend.status))
+                .fill(statusColor(for: friend))
                 .frame(width: 10, height: 10)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(friend.displayName)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                Text(statusText(for: friend.status))
+                Text(statusText(for: friend))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -177,8 +254,13 @@ struct SocialView: View {
         isShowingEditName = false
     }
     
-    private func statusColor(for status: String) -> Color {
-        switch status {
+    private func statusColor(for friend: UserProfile) -> Color {
+        // If last updated more than 10 minutes ago (600 seconds), consider offline
+        if Date().timeIntervalSince(friend.lastUpdatedAt) > 600 {
+            return .gray
+        }
+        
+        switch friend.status {
         case "tracking": return .green
         case "idle": return .yellow
         case "paused": return .orange
@@ -187,8 +269,13 @@ struct SocialView: View {
         }
     }
     
-    private func statusText(for status: String) -> String {
-        switch status {
+    private func statusText(for friend: UserProfile) -> String {
+        // If last updated more than 10 minutes ago (600 seconds), consider offline
+        if Date().timeIntervalSince(friend.lastUpdatedAt) > 600 {
+            return String(localized: "Offline")
+        }
+        
+        switch friend.status {
         case "tracking": return String(localized: "Focusing in Figma")
         case "idle": return String(localized: "Idle")
         case "paused": return String(localized: "Paused")

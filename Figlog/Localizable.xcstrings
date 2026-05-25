@@ -33,9 +33,6 @@
         }
       }
     },
-    "Add Friend" : {
-
-    },
     "After %@" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -87,7 +84,19 @@
         }
       }
     },
+    "Cancel" : {
+
+    },
+    "Click to copy code" : {
+
+    },
     "Connecting..." : {
+
+    },
+    "Create" : {
+
+    },
+    "Create Party" : {
 
     },
     "English" : {
@@ -99,6 +108,9 @@
           }
         }
       }
+    },
+    "Enter Party Code" : {
+
     },
     "FigLog" : {
 
@@ -126,12 +138,6 @@
       }
     },
     "Focusing in Figma" : {
-
-    },
-    "Friend Status" : {
-
-    },
-    "Friend's Invite Code" : {
 
     },
     "Friends" : {
@@ -241,7 +247,7 @@
         }
       }
     },
-    "Invite Code" : {
+    "Join" : {
 
     },
     "Korean" : {
@@ -294,6 +300,9 @@
         }
       }
     },
+    "Leave" : {
+
+    },
     "Light Blue: Short focus session (< 15m)" : {
       "localizations" : {
         "ko" : {
@@ -303,6 +312,9 @@
           }
         }
       }
+    },
+    "Loading members..." : {
+
     },
     "Manually pause tracking if you want to keep Figma open but stop the timer. It will automatically resume the next time you actively use Figma." : {
       "localizations" : {
@@ -324,6 +336,9 @@
         }
       }
     },
+    "My Parties" : {
+
+    },
     "My Profile" : {
 
     },
@@ -331,6 +346,9 @@
 
     },
     "Name" : {
+
+    },
+    "New Party Name" : {
 
     },
     "No Figma focus sessions yet today" : {
@@ -342,9 +360,6 @@
           }
         }
       }
-    },
-    "No friends added yet." : {
-
     },
     "Offline" : {
 
@@ -404,6 +419,9 @@
           }
         }
       }
+    },
+    "Refresh Parties" : {
+
     },
     "Remind me after" : {
       "localizations" : {
@@ -564,6 +582,9 @@
           }
         }
       }
+    },
+    "You haven't joined any parties yet." : {
+
     }
   },
   "version" : "1.0"
