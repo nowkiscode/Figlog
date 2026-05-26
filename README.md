@@ -10,7 +10,7 @@
 ### [👉 Figlog 최신 버전 다운로드 (Download Latest Version) 👈](https://github.com/nowkiscode/Figlog/releases/tag/Figlog-release)
 
 1. 위의 **다운로드 링크**를 클릭하여 설치 파일을 다운로드합니다.
-2. 다운로드된 `Figlog.app` 파일을 **애플리케이션(Applications)** 폴더로 드래그 앤 드롭합니다.
+2. 다운로드된 `Figlog.app` 파일을 **응용프로그램(Applications)** 폴더로 드래그 앤 드롭합니다.
 3. 앱 실행시 보안관련 메세지가 팝업되며 실행을 막을수 있습니다. 그대로 닫기를 클릭해주세요.
 4. 설정 -> 보안에서 밑으로 스크롤하면 Figlog 허용에 관한 섹션이 있습니다. 허용해주세요.
 5. 앱을 실행하면 macOS 상단 메뉴바에 Figlog 아이콘이 표시됩니다.
