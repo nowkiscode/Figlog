@@ -17,11 +17,13 @@
 3. 앱 실행 시 macOS 보안 경고 팝업이 뜨는 경우:
    - 시스템 설정 -> 개인정보 보호 및 보안 -> 밑으로 스크롤하여 **'그래도 열기'** 버튼을 클릭합니다.
 4. *최초 실행 시 Figma의 활성화 여부를 감지하기 위해 **손쉬운 사용(Accessibility)** 권한 허용이 필요합니다.*
-5. 친구에게 배포 및 로컬 빌드 시 발생하는 Ad-hoc 서명/Quarantine 해제 방법은 [xcode_ad_hoc_build_guide.md](file:///Users/nowk/Documents/Figlog/xcode_ad_hoc_build_guide.md)를 참고하세요.
+5. 로컬 빌드 시 발생하는 Ad-hoc 서명/Quarantine 해제 방법은 [xcode_ad_hoc_build_guide.md](file:///Users/nowk/Documents/Figlog/xcode_ad_hoc_build_guide.md)를 참고하세요.
+
 
 ### Windows (C# / WinUI 3)
 * Windows PC에서는 가벼운 REST API와 Win32 API를 사용해 빌드된 네이티브 클라이언트 앱을 지원합니다.
 * `FiglogWindows` 폴더의 C# 프로젝트를 빌드하여 단일 `.exe` 실행 파일로 사용할 수 있습니다.
+* 윈도우버전은 맥버전을 ai를 이용해 다시 만든 버전이며, 버그 발생 이슈가 존재할 수 있습니다.
 
 ---
 
