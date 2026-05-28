@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import FirebaseCore
 import FirebaseFirestore
+import UserNotifications
 
 // MARK: - User Profile Model
 struct UserProfile: Codable, Identifiable {
@@ -10,6 +11,7 @@ struct UserProfile: Codable, Identifiable {
     var status: String // "tracking", "idle", "offline"
     var todayFocusTime: TimeInterval
     var lastUpdatedAt: Date
+    var shareHistory: Bool?
 }
 
 // MARK: - Party Model
@@ -18,6 +20,22 @@ struct Party: Codable, Identifiable {
     var name: String
     var members: [String]
     var createdAt: Date
+}
+
+// MARK: - Chat & History Models
+struct ChatMessage: Codable, Identifiable {
+    @DocumentID var id: String?
+    var senderId: String
+    var senderName: String
+    var text: String
+    var timestamp: Date
+    var expireAt: Date
+}
+
+struct RemoteDailyRecord: Codable {
+    var totalFocusTime: TimeInterval
+    var totalIdleTime: TimeInterval
+    var sessions: [FocusSession]
 }
 
 // MARK: - Firebase Manager
@@ -34,12 +52,17 @@ final class FirebaseManager: ObservableObject {
     @Published var myParties: [Party] = []
     @Published var profilesCache: [String: UserProfile] = [:]
     @Published var debugError: String = ""
+    @Published var latestVersion: String? = nil
+    
+    // Chat & History Data
+    @Published var chatMessages: [String: [ChatMessage]] = [:] // partyId -> messages
     
     // MARK: - Private Properties
     private var db = Firestore.firestore()
     private var myProfileListener: ListenerRegistration?
     private var myPartiesListener: ListenerRegistration?
     private var membersListeners: [ListenerRegistration] = []
+    private var chatListeners: [String: ListenerRegistration] = [:]
     private var isListeningToPartiesView = false
     private let usersCollection = "users"
     
@@ -55,7 +78,9 @@ final class FirebaseManager: ObservableObject {
         print("Firebase initialized with UUID: \(currentUID)")
         await setupUserProfile(uid: currentUID)
         listenToMyProfile(uid: currentUID)
+        await fetchLatestVersion()
     }
+    
     
     private func setupUserProfile(uid: String) async {
         let docRef = db.collection(usersCollection).document(uid)
@@ -66,10 +91,13 @@ final class FirebaseManager: ObservableObject {
                     displayName: "User_" + String(Int.random(in: 1000...9999)),
                     status: "offline",
                     todayFocusTime: 0,
-                    lastUpdatedAt: Date()
+                    lastUpdatedAt: Date(),
+                    shareHistory: true
                 )
                 try docRef.setData(from: newProfile)
                 self.currentUserProfile = newProfile
+            } else {
+                self.currentUserProfile = try document.data(as: UserProfile.self)
             }
         } catch {
             let errorMsg = "Firestore Error: \(error.localizedDescription)"
@@ -108,8 +136,11 @@ final class FirebaseManager: ObservableObject {
         myPartiesListener = nil
         membersListeners.forEach { $0.remove() }
         membersListeners.removeAll()
+        chatListeners.values.forEach { $0.remove() }
+        chatListeners.removeAll()
         myParties = []
         profilesCache.removeAll()
+        chatMessages.removeAll()
     }
     
     func refreshParties() {
@@ -138,6 +169,11 @@ final class FirebaseManager: ObservableObject {
                     self.myParties = parties.sorted { $0.name < $1.name }
                     if self.isListeningToPartiesView {
                         self.listenToMembers(uids: Array(allMemberUIDs))
+                        for party in parties {
+                            if let pid = party.id {
+                                self.listenToChatMessages(partyId: pid)
+                            }
+                        }
                     }
                 }
             }
@@ -188,6 +224,11 @@ final class FirebaseManager: ObservableObject {
     func updateDisplayName(_ name: String) {
         guard let uid = UserDefaults.standard.string(forKey: "userUID") else { return }
         db.collection(usersCollection).document(uid).updateData(["displayName": name])
+    }
+    
+    func updateShareHistory(_ share: Bool) {
+        guard let uid = UserDefaults.standard.string(forKey: "userUID") else { return }
+        db.collection(usersCollection).document(uid).updateData(["shareHistory": share])
     }
     
     // MARK: - Party Management
@@ -257,9 +298,124 @@ final class FirebaseManager: ObservableObject {
         }
     }
     
+    // MARK: - Chat & History Features
+    
+    func sendMessage(text: String, partyId: String) {
+        guard let uid = UserDefaults.standard.string(forKey: "userUID"),
+              let name = currentUserProfile?.displayName, !text.isEmpty else { return }
+        
+        let expireAt = Calendar.current.date(byAdding: .day, value: 15, to: Date()) ?? Date().addingTimeInterval(15 * 24 * 3600)
+        let message = ChatMessage(senderId: uid, senderName: name, text: text, timestamp: Date(), expireAt: expireAt)
+        
+        do {
+            try db.collection("parties").document(partyId).collection("messages").addDocument(from: message)
+        } catch {
+            print("Error sending message: \(error)")
+        }
+    }
+    
+    private func listenToChatMessages(partyId: String) {
+        if chatListeners[partyId] != nil { return }
+        
+        let listener = db.collection("parties").document(partyId).collection("messages")
+            .order(by: "timestamp", descending: false)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self, let snapshot = snapshot else { return }
+                
+                var newMessages: [ChatMessage] = []
+                
+                let myUid = UserDefaults.standard.string(forKey: "userUID") ?? ""
+                
+                for change in snapshot.documentChanges {
+                    if change.type == .added, let msg = try? change.document.data(as: ChatMessage.self) {
+                        if msg.senderId != myUid && msg.timestamp.timeIntervalSinceNow > -5.0 {
+                            // Check if notifications are enabled for this party
+                            let defaults = UserDefaults.standard
+                            let key = "notificationsEnabled_\(partyId)"
+                            let enabled = defaults.object(forKey: key) == nil ? true : defaults.bool(forKey: key)
+                            
+                            if enabled {
+                                self.triggerLocalNotification(title: msg.senderName, body: msg.text)
+                            }
+                        }
+                    }
+                }
+                
+                for doc in snapshot.documents {
+                    if let msg = try? doc.data(as: ChatMessage.self) {
+                        newMessages.append(msg)
+                    }
+                }
+                
+                DispatchQueue.main.async {
+                    self.chatMessages[partyId] = newMessages
+                }
+            }
+        chatListeners[partyId] = listener
+    }
+    
+    private func triggerLocalNotification(title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
+    }
+    
+    func uploadDailyHistory(date: Date, totalFocusTime: TimeInterval, totalIdleTime: TimeInterval, sessions: [FocusSession]) {
+        guard let uid = UserDefaults.standard.string(forKey: "userUID") else { return }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let docId = formatter.string(from: date)
+        
+        let record = RemoteDailyRecord(totalFocusTime: totalFocusTime, totalIdleTime: totalIdleTime, sessions: sessions)
+        
+        do {
+            try db.collection(usersCollection).document(uid).collection("history").document(docId).setData(from: record)
+        } catch {
+            print("Error uploading history: \(error)")
+        }
+    }
+    
+    func fetchMemberHistory(uid: String) async -> [Date: RemoteDailyRecord]? {
+        do {
+            let snapshot = try await db.collection(usersCollection).document(uid).collection("history").getDocuments()
+            var history: [Date: RemoteDailyRecord] = [:]
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            
+            for doc in snapshot.documents {
+                if let record = try? doc.data(as: RemoteDailyRecord.self), let date = formatter.date(from: doc.documentID) {
+                    history[date] = record
+                }
+            }
+            return history
+        } catch {
+            print("Error fetching member history: \(error)")
+            return nil
+        }
+    }
+    
     // MARK: - Utilities
     private func generatePartyCode() -> String {
         let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         return String((0..<6).compactMap { _ in letters.randomElement() })
+    }
+    
+    func fetchLatestVersion() async {
+        let docRef = db.collection("config").document("app")
+        do {
+            let doc = try await docRef.getDocument()
+            if doc.exists, let data = doc.data(), let latest = data["latestVersion"] as? String {
+                let latestVer = latest
+                DispatchQueue.main.async {
+                    self.latestVersion = latestVer
+                }
+            }
+        } catch {
+            print("Error fetching latest version: \(error.localizedDescription)")
+        }
     }
 }

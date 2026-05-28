@@ -152,6 +152,19 @@ struct SettingsView: View {
                             .disabled(!tracker.breakRemindersEnabled)
                         }
                     }
+                    
+                    Divider()
+                    
+                    // Privacy
+                    SettingsRow("Privacy") {
+                        VStack(alignment: .leading, spacing: 4) {
+                            let shareBinding = Binding(
+                                get: { FirebaseManager.shared.currentUserProfile?.shareHistory ?? true },
+                                set: { FirebaseManager.shared.updateShareHistory($0) }
+                            )
+                            Toggle("Share My Detailed Focus Statistics with Party Members", isOn: shareBinding)
+                        }
+                    }
                 }
                 .padding(32)
             }

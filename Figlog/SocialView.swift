@@ -8,6 +8,11 @@ struct SocialView: View {
     @State private var isShowingEditName = false
     @State private var newName = ""
     
+    @State private var showingChatForParty: Party? = nil
+    @State private var showingHistoryForUser: UserProfile? = nil
+    
+    @AppStorage("appLanguage") private var appLanguage = "en"
+    
     var body: some View {
         VStack(spacing: 20) {
             if firebase.currentUserProfile == nil {
@@ -37,6 +42,16 @@ struct SocialView: View {
         }
         .onDisappear {
             firebase.stopListeningToParties()
+        }
+        .popover(item: $showingChatForParty) { party in
+            ChatView(party: party)
+                .frame(width: 300, height: 400)
+                .environment(\.locale, Locale(identifier: appLanguage))
+        }
+        .popover(item: $showingHistoryForUser) { user in
+            MemberHistoryView(user: user)
+                .frame(width: 350, height: 450)
+                .environment(\.locale, Locale(identifier: appLanguage))
         }
     }
     
@@ -197,17 +212,29 @@ struct SocialView: View {
                 .font(.caption)
                 .buttonStyle(.borderless)
                 .foregroundStyle(.red)
+                
+                Button(action: {
+                    showingChatForParty = party
+                }) {
+                    Image(systemName: "message")
+                }
+                .buttonStyle(.borderless)
+                .help("Party Chat")
             }
             
-            let members = party.members.compactMap { firebase.profilesCache[$0] }.sorted { $0.displayName < $1.displayName }
+            let members = party.members.compactMap { firebase.profilesCache[$0] }.sorted { $0.todayFocusTime > $1.todayFocusTime }
             if members.isEmpty {
                 Text("Loading members...")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             } else {
                 VStack(spacing: 8) {
-                    ForEach(members) { member in
-                        friendRow(member)
+                    ForEach(Array(members.enumerated()), id: \.element.id) { index, member in
+                        friendRow(member, index: index)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                showingHistoryForUser = member
+                            }
                     }
                 }
             }
@@ -217,8 +244,21 @@ struct SocialView: View {
         .cornerRadius(8)
     }
     
-    private func friendRow(_ friend: UserProfile) -> some View {
+    private func friendRow(_ friend: UserProfile, index: Int) -> some View {
         HStack(spacing: 12) {
+            if index == 0 {
+                Text("👑")
+            } else if index == 1 {
+                Text("🥈")
+            } else if index == 2 {
+                Text("🥉")
+            } else {
+                Text("\(index + 1)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 16, alignment: .center)
+            }
+            
             Circle()
                 .fill(statusColor(for: friend))
                 .frame(width: 10, height: 10)
@@ -284,5 +324,223 @@ struct SocialView: View {
         case "offline": return "Offline"
         default: return "Offline"
         }
+    }
+}
+
+// MARK: - Chat View
+struct ChatView: View {
+    let party: Party
+    @ObservedObject private var firebase = FirebaseManager.shared
+    @State private var inputText = ""
+    @State private var notificationsEnabled = true
+    
+    var body: some View {
+        VStack {
+            HStack {
+                Text("\(party.name) Chat")
+                    .font(.headline)
+                Spacer()
+                Toggle(isOn: $notificationsEnabled) {
+                    Image(systemName: notificationsEnabled ? "bell.fill" : "bell.slash.fill")
+                }
+                .toggleStyle(.button)
+                .buttonStyle(.borderless)
+                .onChange(of: notificationsEnabled) { oldValue, newValue in
+                    UserDefaults.standard.set(newValue, forKey: "notificationsEnabled_\(party.id ?? "")")
+                }
+            }
+            .padding()
+            
+            Divider()
+            
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    let messages = firebase.chatMessages[party.id ?? ""] ?? []
+                    ForEach(messages) { msg in
+                        let isMe = msg.senderId == firebase.currentUserProfile?.id
+                        HStack {
+                            if isMe { Spacer() }
+                            VStack(alignment: isMe ? .trailing : .leading, spacing: 4) {
+                                HStack {
+                                    if !isMe {
+                                        Text(msg.senderName)
+                                            .font(.caption)
+                                            .fontWeight(.bold)
+                                    }
+                                    Text(msg.timestamp, style: .time)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Text(msg.text)
+                                    .font(.body)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(isMe ? Color.accentColor : Color.secondary.opacity(0.15))
+                                    .foregroundColor(isMe ? .white : .primary)
+                                    .cornerRadius(12)
+                            }
+                            if !isMe { Spacer() }
+                        }
+                    }
+                }
+                .padding()
+            }
+            
+            HStack {
+                TextField("Message...", text: $inputText)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit { sendMessage() }
+                
+                Button("Send") { sendMessage() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(inputText.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            .padding()
+        }
+        .onAppear {
+            let key = "notificationsEnabled_\(party.id ?? "")"
+            if UserDefaults.standard.object(forKey: key) != nil {
+                notificationsEnabled = UserDefaults.standard.bool(forKey: key)
+            }
+        }
+    }
+    
+    private func sendMessage() {
+        let trimmed = inputText.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, let partyId = party.id else { return }
+        firebase.sendMessage(text: trimmed, partyId: partyId)
+        inputText = ""
+    }
+}
+
+// MARK: - Member History View
+struct MemberHistoryView: View {
+    let user: UserProfile
+    @ObservedObject private var firebase = FirebaseManager.shared
+    @State private var historyData: [Date: RemoteDailyRecord]? = nil
+    @State private var isLoading = true
+    
+    var body: some View {
+        VStack {
+            VStack(spacing: 4) {
+                Text("\(user.displayName)'s History")
+                    .font(.headline)
+                Text("History is updated daily at midnight.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            
+            if user.shareHistory == false {
+                Text("This user has hidden their history.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .padding()
+            } else if isLoading {
+                ProgressView("Loading...")
+                    .padding()
+            } else if let data = historyData, !data.isEmpty {
+                let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
+                let filteredData = data.filter { $0.key >= thirtyDaysAgo }
+                let totalFocus = filteredData.values.map { $0.totalFocusTime }.reduce(0, +)
+                let totalIdleTime = filteredData.values.map { $0.totalIdleTime }.reduce(0, +)
+                
+                VStack(alignment: .leading, spacing: 32) {
+                    HStack(spacing: 40) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Last 30 Days")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Text(FocusTracker.formatCompactDuration(totalFocus))
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                        }
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Idle Total")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Text(FocusTracker.formatCompactDuration(totalIdleTime))
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Activity Heatmap")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        
+                        calendarHeatmap(stats: data)
+                    }
+                }
+                .padding()
+                Spacer()
+            } else {
+                Text("No history available.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .padding()
+                Spacer()
+            }
+        }
+        .frame(width: 360, height: 400)
+        .task {
+            if user.shareHistory != false, let uid = user.id {
+                historyData = await firebase.fetchMemberHistory(uid: uid)
+            }
+            isLoading = false
+        }
+    }
+    
+    private func calendarHeatmap(stats: [Date: RemoteDailyRecord]) -> some View {
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
+        let days = lastNDays(30)
+        let maxTime = stats.values.map { $0.totalFocusTime }.max() ?? 1
+        let weekdays = Calendar.current.shortWeekdaySymbols
+        
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                ForEach(weekdays, id: \.self) { day in
+                    Text(day)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            
+            LazyVGrid(columns: columns, spacing: 4) {
+                ForEach(days, id: \.self) { date in
+                    if date > Calendar.current.startOfDay(for: Date()) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.clear)
+                            .aspectRatio(1, contentMode: .fit)
+                    } else if let record = stats.first(where: { Calendar.current.isDate($0.key, inSameDayAs: date) })?.value {
+                        let intensity = record.totalFocusTime / maxTime
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.accentColor.opacity(max(0.15, intensity)))
+                            .aspectRatio(1, contentMode: .fit)
+                            .help("\(date.formatted(date: .abbreviated, time: .omitted)): \(FocusTracker.formatCompactDuration(record.totalFocusTime))")
+                    } else {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.secondary.opacity(0.1))
+                            .aspectRatio(1, contentMode: .fit)
+                            .help("\(date.formatted(date: .abbreviated, time: .omitted)): No activity")
+                    }
+                }
+            }
+        }
+    }
+
+    private func lastNDays(_ daysCount: Int) -> [Date] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let weekday = calendar.component(.weekday, from: today)
+        let daysToSaturday = 7 - weekday
+        let endOfWeek = calendar.date(byAdding: .day, value: daysToSaturday, to: today)!
+        
+        let gridCells = 35
+        return (0..<gridCells).reversed().compactMap { calendar.date(byAdding: .day, value: -$0, to: endOfWeek) }
     }
 }

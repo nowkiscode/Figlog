@@ -13,6 +13,7 @@ struct ContentView: View {
     @Environment(\.openSettings) private var openSettings
     @Environment(\.locale) private var locale
     @ObservedObject var tracker: FocusTracker
+    @ObservedObject private var firebase = FirebaseManager.shared
     @State private var showingHistory = false
     @State private var showingHelp = false
     @State private var historyPeriod: Int = 30
@@ -24,7 +25,7 @@ struct ContentView: View {
     @State private var selectedTab: Tab = .stats
 
     private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.2.2"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.2.3"
     }
 
     var body: some View {
@@ -257,10 +258,30 @@ struct ContentView: View {
             .buttonStyle(.borderless)
             .help(tracker.isPaused ? String(localized: "Resume tracking") : String(localized: "Pause tracking"))
 
-            Text("v\(appVersion)")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .padding(.leading, 8)
+            HStack(spacing: 4) {
+                Text("v\(appVersion)")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                
+                if let latest = firebase.latestVersion, latest != appVersion {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundStyle(.red)
+                        .help("최신버전이 나왔으니 업데이트 해주세요!")
+                    
+                    Button(action: {
+                        if let url = URL(string: "https://github.com/nowkiscode/Figlog/releases") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }) {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.blue)
+                    }
+                    .buttonStyle(.borderless)
+                    .help("최신버전 다운로드 페이지로 이동")
+                }
+            }
+            .padding(.leading, 8)
                 
             Button(action: { showingHelp.toggle() }) {
                 Image(systemName: "questionmark.circle")

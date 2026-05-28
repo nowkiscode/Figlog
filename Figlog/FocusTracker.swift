@@ -475,6 +475,12 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
             totalIdleTime: todayIdleTime,
             sessions: todaySessions
         )
+        FirebaseManager.shared.uploadDailyHistory(
+            date: currentDay,
+            totalFocusTime: todayFocusTime,
+            totalIdleTime: todayIdleTime,
+            sessions: todaySessions
+        )
     }
 
     func getStats(days: Int = 30) -> [DailyFocusRecord] {

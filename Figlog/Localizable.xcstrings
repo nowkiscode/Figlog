@@ -4,6 +4,16 @@
     "" : {
 
     },
+    "%@ Chat" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 채팅"
+          }
+        }
+      }
+    },
     "%@: %@" : {
       "localizations" : {
         "en" : {
@@ -17,7 +27,29 @@
     "%@: No activity" : {
 
     },
+    "%@'s History" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@님의 히스토리"
+          }
+        }
+      }
+    },
+    "%lld" : {
+
+    },
     "•" : {
+
+    },
+    "👑" : {
+
+    },
+    "🥈" : {
+
+    },
+    "🥉" : {
 
     },
     "00:00 - 24:00" : {
@@ -250,6 +282,16 @@
         }
       }
     },
+    "History is updated daily at midnight." : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 사람의 히스토리는 매일 자정에 업데이트됩니다."
+          }
+        }
+      }
+    },
     "How to use FigLog" : {
       "localizations" : {
         "ko" : {
@@ -402,12 +444,32 @@
         }
       }
     },
+    "Loading..." : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "불러오는 중..."
+          }
+        }
+      }
+    },
     "Manually pause tracking if you want to keep Figma open but stop the timer. It will automatically resume the next time you actively use Figma." : {
       "localizations" : {
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Figma를 열어둔 채 타이머만 멈추고 싶을 때 수동으로 추적을 일시정지합니다. 다음에 Figma를 활발히 사용하면 자동으로 재개됩니다."
+          }
+        }
+      }
+    },
+    "Message..." : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메시지 입력..."
           }
         }
       }
@@ -482,6 +544,16 @@
         }
       }
     },
+    "No history available." : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "히스토리 기록이 없습니다."
+          }
+        }
+      }
+    },
     "Offline" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -500,6 +572,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "피그마 이탈 중 (추적 유지)"
+          }
+        }
+      }
+    },
+    "Party Chat" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파티 채팅"
           }
         }
       }
@@ -534,6 +616,9 @@
           }
         }
       }
+    },
+    "Privacy" : {
+
     },
     "Quit FigLog" : {
       "localizations" : {
@@ -605,6 +690,16 @@
         }
       }
     },
+    "Send" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전송"
+          }
+        }
+      }
+    },
     "Sessions" : {
       "localizations" : {
         "ko" : {
@@ -625,12 +720,25 @@
         }
       }
     },
+    "Share My Detailed Focus Statistics with Party Members" : {
+
+    },
     "Status: %@" : {
       "localizations" : {
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "상태: %@"
+          }
+        }
+      }
+    },
+    "This user has hidden their history." : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 사용자는 히스토리를 비공개로 설정했습니다."
           }
         }
       }
@@ -760,6 +868,12 @@
           }
         }
       }
+    },
+    "최신버전 다운로드 페이지로 이동" : {
+
+    },
+    "최신버전이 나왔으니 업데이트 해주세요!" : {
+
     }
   },
   "version" : "1.0"

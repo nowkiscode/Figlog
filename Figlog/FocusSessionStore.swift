@@ -31,8 +31,8 @@ final class FocusSessionStore: @unchecked Sendable {
     }
 
     init() {
-        migrateFromUserDefaultsIfNeeded()
     }
+
 
     private func fileURL(for date: Date) -> URL {
         let formatter = DateFormatter()
@@ -41,23 +41,7 @@ final class FocusSessionStore: @unchecked Sendable {
         return baseDirectory.appendingPathComponent("\(dateString).json")
     }
 
-    private func migrateFromUserDefaultsIfNeeded() {
-        let defaults = UserDefaults.standard
-        guard let data = defaults.data(forKey: storageKey) else { return }
-        
-        print("📦 Found legacy UserDefaults records. Starting migration...")
-        
-        do {
-            let records = try JSONDecoder().decode([DailyFocusRecord].self, from: data)
-            for record in records {
-                saveRecord(record)
-            }
-            defaults.removeObject(forKey: storageKey)
-            print("✅ Successfully migrated \(records.count) records to files and cleared legacy UserDefaults data.")
-        } catch {
-            print("❌ Error parsing legacy records for migration: \(error.localizedDescription)")
-        }
-    }
+
 
     func loadTodayRecord() -> DailyFocusRecord? {
         let today = Calendar.current.startOfDay(for: Date())
