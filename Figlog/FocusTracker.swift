@@ -9,7 +9,6 @@ import AppKit
 import Combine
 import Foundation
 import UserNotifications
-import os
 
 struct FocusSession: Codable, Identifiable, Equatable {
     let id: UUID
@@ -347,7 +346,6 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
             if activeTargetAppName != currentAppName {
                 let msg = "🎯 Target App Changed to: \(currentAppName ?? "Unknown")"
                 print(msg)
-                Logger().info("Figlog_Test: \(msg)")
                 
                 if isTracking && hasEnteredFocusSession && activeSession != nil {
                     let oldApp = activeSession?.appName
