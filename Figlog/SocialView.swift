@@ -222,7 +222,15 @@ struct SocialView: View {
                 .help("Party Chat")
             }
             
-            let members = party.members.compactMap { firebase.profilesCache[$0] }.sorted { $0.todayFocusTime > $1.todayFocusTime }
+            let members = party.members.compactMap { uid -> UserProfile? in
+                guard var profile = firebase.profilesCache[uid] else { return nil }
+                if !Calendar.current.isDateInToday(profile.lastUpdatedAt) {
+                    profile.todayFocusTime = 0
+                    profile.status = "offline"
+                    profile.activeAppName = nil
+                }
+                return profile
+            }.sorted { $0.todayFocusTime > $1.todayFocusTime }
             if members.isEmpty {
                 Text("Loading members...")
                     .font(.caption)
@@ -317,10 +325,15 @@ struct SocialView: View {
         }
         
         switch friend.status {
-        case "tracking": return "Focusing in Figma"
+        case "tracking":
+            if let app = friend.activeAppName {
+                let formatString = String(localized: "Working in %@")
+                return String(format: formatString, app)
+            }
+            return "Working"
         case "idle": return "Idle"
         case "paused": return "Paused"
-        case "waiting": return "Waiting for Figma"
+        case "waiting": return "Waiting for App"
         case "offline": return "Offline"
         default: return "Offline"
         }

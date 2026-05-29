@@ -88,6 +88,30 @@ struct SettingsView: View {
                     
                     Divider()
                     
+                    // Target Apps Settings
+                    VStack(alignment: .leading, spacing: 20) {
+                        SettingsRow("Target Apps") {
+                            VStack(alignment: .leading, spacing: 10) {
+                                ForEach(FocusTracker.supportedApps, id: \.id) { app in
+                                    Toggle(app.name, isOn: Binding(
+                                        get: { tracker.enabledTargetAppIDs.contains(app.id) },
+                                        set: { isEnabled in
+                                            var current = tracker.enabledTargetAppIDs
+                                            if isEnabled {
+                                                current.insert(app.id)
+                                            } else {
+                                                current.remove(app.id)
+                                            }
+                                            tracker.setEnabledTargetAppIDs(current)
+                                        }
+                                    ))
+                                }
+                            }
+                        }
+                    }
+                    
+                    Divider()
+                    
                     // Focus Tracker Settings
                     VStack(alignment: .leading, spacing: 20) {
                         SettingsRow("Idle after") {
@@ -113,8 +137,8 @@ struct SettingsView: View {
                         SettingsRow("Grace period") {
                             VStack(alignment: .leading, spacing: 4) {
                                 Picker("", selection: Binding(
-                                    get: { tracker.nonFigmaGracePeriod },
-                                    set: { tracker.setNonFigmaGracePeriod($0) }
+                                    get: { tracker.nonTargetAppGracePeriod },
+                                    set: { tracker.setNonTargetAppGracePeriod($0) }
                                 )) {
                                     ForEach(gracePeriodOptions, id: \.self) { duration in
                                         Text(formatMinutes(duration)).tag(duration)
@@ -123,7 +147,7 @@ struct SettingsView: View {
                                 .labelsHidden()
                                 .frame(width: 140)
                                 
-                                Text("Time allowed outside Figma before a session ends.")
+                                Text("Time allowed outside target apps before a session ends.")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)

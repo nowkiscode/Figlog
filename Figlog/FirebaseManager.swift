@@ -9,6 +9,7 @@ struct UserProfile: Codable, Identifiable {
     @DocumentID var id: String?
     var displayName: String
     var status: String // "tracking", "idle", "offline"
+    var activeAppName: String?
     var todayFocusTime: TimeInterval
     var lastUpdatedAt: Date
     var shareHistory: Bool?
@@ -207,13 +208,21 @@ final class FirebaseManager: ObservableObject {
     }
     
     // MARK: - Status & Profile Updates
-    func updateMyStatus(status: String, todayFocusTime: TimeInterval) {
+    func updateMyStatus(status: String, activeAppName: String?, todayFocusTime: TimeInterval) {
         guard let uid = UserDefaults.standard.string(forKey: "userUID") else { return }
-        let data: [String: Any] = [
+        
+        var data: [String: Any] = [
             "status": status,
             "todayFocusTime": todayFocusTime,
             "lastUpdatedAt": FieldValue.serverTimestamp()
         ]
+        
+        if let activeAppName = activeAppName {
+            data["activeAppName"] = activeAppName
+        } else {
+            data["activeAppName"] = FieldValue.delete()
+        }
+
         db.collection(usersCollection).document(uid).updateData(data) { error in
             if let error = error {
                 print("Error updating status: \(error)")

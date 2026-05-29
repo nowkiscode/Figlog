@@ -1,880 +1,1015 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "" : {
-
+  "sourceLanguage": "en",
+  "strings": {
+    "": {},
+    "%@ Chat": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 채팅"
+          }
+        }
+      }
+    },
+    "%@: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@: %2$@"
+          }
+        }
+      }
     },
-    "%@ Chat" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 채팅"
+    "%@: No activity": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: 활동 없음"
           }
         }
       }
     },
-    "%@: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@: %2$@"
+    "%@'s History": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@님의 히스토리"
           }
         }
       }
     },
-    "%@: No activity" : {
-
+    "%lld": {},
+    "•": {},
+    "👑": {},
+    "🥈": {},
+    "🥉": {},
+    "00:00 - 24:00": {},
+    "Activity Heatmap": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "활동 히트맵"
+          }
+        }
+      }
     },
-    "%@'s History" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@님의 히스토리"
+    "After %@": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 후"
           }
         }
       }
     },
-    "%lld" : {
-
+    "Allows you to switch to other apps briefly without breaking your current focus session. If you return to your target app within this time, the session continues uninterrupted. If not, the timer stops and deducts the grace period.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "현재 집중 세션을 끊지 않고 잠시 다른 앱으로 전환할 수 있게 해줍니다. 이 시간 내에 Figma로 돌아오면 세션이 중단 없이 계속됩니다. 돌아오지 않으면 타이머가 멈추고 유예 시간이 차감됩니다."
+          }
+        }
+      }
     },
-    "•" : {
-
+    "App Usage": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앱 사용 시간"
+          }
+        }
+      }
     },
-    "👑" : {
-
+    "Back": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "뒤로"
+          }
+        }
+      }
     },
-    "🥈" : {
-
+    "Blue: Completed focus session (> 15m)": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파란색: 완료된 집중 세션 (> 15분)"
+          }
+        }
+      }
     },
-    "🥉" : {
-
+    "Break reminder": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "휴식 알림"
+          }
+        }
+      }
     },
-    "00:00 - 24:00" : {
-
+    "Cancel": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "취소"
+          }
+        }
+      }
     },
-    "Activity Heatmap" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "활동 히트맵"
+    "Click to copy code": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "클릭하여 코드 복사"
           }
         }
       }
     },
-    "After %@" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 후"
+    "Connecting...": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연결 중..."
           }
         }
       }
     },
-    "Allows you to switch to other apps briefly without breaking your current focus session. If you return to Figma within this time, the session continues uninterrupted. If not, the timer stops and deducts the grace period." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "현재 집중 세션을 끊지 않고 잠시 다른 앱으로 전환할 수 있게 해줍니다. 이 시간 내에 Figma로 돌아오면 세션이 중단 없이 계속됩니다. 돌아오지 않으면 타이머가 멈추고 유예 시간이 차감됩니다."
+    "Create": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "생성"
           }
         }
       }
     },
-    "Back" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "뒤로"
+    "Create Party": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파티 생성"
           }
         }
       }
     },
-    "Blue: Completed focus session (> 15m)" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "파란색: 완료된 집중 세션 (> 15분)"
+    "English": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "영어"
           }
         }
       }
     },
-    "Break reminder" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "휴식 알림"
+    "Enter Party Code": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파티 코드 입력"
           }
         }
       }
     },
-    "Cancel" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "취소"
+    "FigLog": {},
+    "Figma": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "피그마 (Figma)"
           }
         }
       }
     },
-    "Click to copy code" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "클릭하여 코드 복사"
+    "Figma is idle": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "피그마 유휴 상태"
           }
         }
       }
     },
-    "Connecting..." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "연결 중..."
+    "Figma not in focus": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "피그마 포커스 해제"
           }
         }
       }
     },
-    "Create" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "생성"
+    "Focusing in Figma": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "피그마 집중 중"
           }
         }
       }
     },
-    "Create Party" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "파티 생성"
+    "Framer": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "프레이머 (Framer)"
           }
         }
       }
     },
-    "English" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "영어"
+    "Friends": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파티 목록"
           }
         }
       }
     },
-    "Enter Party Code" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "파티 코드 입력"
+    "General": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일반"
           }
         }
       }
     },
-    "FigLog" : {
-
+    "Grace period": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "피그마 이탈 허용 시간"
+          }
+        }
+      }
     },
-    "Figma is idle" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "피그마 유휴 상태"
+    "Grace Period:": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "유예 시간 (Grace Period):"
           }
         }
       }
     },
-    "Figma not in focus" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "피그마 포커스 해제"
+    "Green: Currently tracking focus session": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "초록색: 현재 작업 집중 상태"
           }
         }
       }
     },
-    "Focusing in Figma" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "피그마 집중 중"
+    "History": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "히스토리"
           }
         }
       }
     },
-    "Friends" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "파티 목록"
+    "History is updated daily at midnight.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다른 사람의 히스토리는 매일 자정에 업데이트됩니다."
           }
         }
       }
     },
-    "General" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일반"
+    "How to use FigLog": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FigLog 사용법"
           }
         }
       }
     },
-    "Grace period" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "피그마 이탈 허용 시간"
+    "Idle": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "유휴 상태"
           }
         }
       }
     },
-    "Grace Period:" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "유예 시간 (Grace Period):"
+    "Idle after": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "유휴 상태 감지 기준"
           }
         }
       }
     },
-    "Green: Currently tracking Figma session" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "초록색: 현재 추적 중인 Figma 세션"
+    "Idle Today": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘 총 유휴 시간"
           }
         }
       }
     },
-    "History" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "히스토리"
+    "Idle Total": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "총 유휴 시간"
           }
         }
       }
     },
-    "History is updated daily at midnight." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "다른 사람의 히스토리는 매일 자정에 업데이트됩니다."
+    "Insights": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "통계"
           }
         }
       }
     },
-    "How to use FigLog" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "FigLog 사용법"
+    "Join": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "참가"
           }
         }
       }
     },
-    "Idle" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "유휴 상태"
+    "Korean": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한국어"
           }
         }
       }
     },
-    "Idle after" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "유휴 상태 감지 기준"
+    "Language": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "언어"
           }
         }
       }
     },
-    "Idle Today" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오늘 총 유휴 시간"
+    "Last 7 Days": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "최근 7일"
           }
         }
       }
     },
-    "Idle Total" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "총 유휴 시간"
+    "Last 30 Days": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "최근 30일"
           }
         }
       }
     },
-    "Insights" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "통계"
+    "Launch at login": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "로그인 시 자동 실행"
           }
         }
       }
     },
-    "Join" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "참가"
+    "Leave": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "나가기"
           }
         }
       }
     },
-    "Korean" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "한국어"
+    "Light Blue: Short focus session (< 15m)": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연한 파란색: 짧은 집중 세션 (< 15분)"
           }
         }
       }
     },
-    "Language" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "언어"
+    "Loading members...": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "멤버 불러오는 중..."
           }
         }
       }
     },
-    "Last 7 Days" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "최근 7일"
+    "Loading...": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "불러오는 중..."
           }
         }
       }
     },
-    "Last 30 Days" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "최근 30일"
+    "Manually pause tracking if you want to keep your target app open but stop the timer. It will automatically resume the next time you actively use the app.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Figma를 열어둔 채 타이머만 멈추고 싶을 때 수동으로 추적을 일시정지합니다. 다음에 Figma를 활발히 사용하면 자동으로 재개됩니다."
           }
         }
       }
     },
-    "Launch at login" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "로그인 시 자동 실행"
+    "Message...": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "메시지 입력..."
           }
         }
       }
     },
-    "Leave" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "나가기"
+    "Monthly": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "월간"
           }
         }
       }
     },
-    "Light Blue: Short focus session (< 15m)" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "연한 파란색: 짧은 집중 세션 (< 15분)"
+    "My Parties": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내 파티 목록"
           }
         }
       }
     },
-    "Loading members..." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "멤버 불러오는 중..."
+    "My Profile": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내 프로필"
           }
         }
       }
     },
-    "Loading..." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "불러오는 중..."
+    "My Stats": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내 통계"
           }
         }
       }
     },
-    "Manually pause tracking if you want to keep Figma open but stop the timer. It will automatically resume the next time you actively use Figma." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Figma를 열어둔 채 타이머만 멈추고 싶을 때 수동으로 추적을 일시정지합니다. 다음에 Figma를 활발히 사용하면 자동으로 재개됩니다."
+    "Name": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이름"
           }
         }
       }
     },
-    "Message..." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "메시지 입력..."
+    "New Party Name": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "새 파티 이름"
           }
         }
       }
     },
-    "Monthly" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "월간"
+    "No app usage data available": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앱 사용 데이터가 없습니다"
           }
         }
       }
     },
-    "My Parties" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "내 파티 목록"
+    "No focus sessions yet today": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘 아직 작업 집중 기록이 없습니다"
           }
         }
       }
     },
-    "My Profile" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "내 프로필"
+    "No history available.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "히스토리 기록이 없습니다."
           }
         }
       }
     },
-    "My Stats" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "내 통계"
+    "Offline": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오프라인"
           }
         }
       }
     },
-    "Name" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이름"
+    "Out of Figma but still tracking": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "피그마 이탈 중 (추적 유지)"
           }
         }
       }
     },
-    "New Party Name" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "새 파티 이름"
+    "Party Chat": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파티 채팅"
           }
         }
       }
     },
-    "No Figma focus sessions yet today" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "아직 오늘의 피그마 집중 기록이 없습니다"
+    "Pause tracking": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "추적 일시정지"
           }
         }
       }
     },
-    "No history available." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "히스토리 기록이 없습니다."
+    "Pause/Resume:": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일시정지/재개:"
           }
         }
       }
     },
-    "Offline" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오프라인"
+    "Paused": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일시정지"
           }
         }
       }
     },
-    "Out of Figma but still tracking" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "피그마 이탈 중 (추적 유지)"
+    "PowerPoint": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파워포인트 (PowerPoint)"
           }
         }
       }
     },
-    "Party Chat" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "파티 채팅"
+    "Privacy": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "개인정보 보호"
           }
         }
       }
     },
-    "Pause tracking" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "추적 일시정지"
+    "Quit FigLog": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FigLog 종료"
           }
         }
       }
     },
-    "Pause/Resume:" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일시정지/재개:"
+    "Real focus time": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실제 작업 집중 시간"
           }
         }
       }
     },
-    "Paused" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일시정지"
+    "Recent Sessions": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "최근 집중 기록"
           }
         }
       }
     },
-    "Privacy" : {
-
+    "Refresh Parties": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파티 새로고침"
+          }
+        }
+      }
     },
-    "Quit FigLog" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "FigLog 종료"
+    "Remind me after": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "휴식 알림 기준 시간"
           }
         }
       }
     },
-    "Real Figma focus time" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "순수 Figma 집중 시간"
+    "Resume tracking": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "추적 재개"
           }
         }
       }
     },
-    "Recent Sessions" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "최근 집중 기록"
+    "Save": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "저장"
           }
         }
       }
     },
-    "Refresh Parties" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "파티 새로고침"
+    "Send": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "전송"
           }
         }
       }
     },
-    "Remind me after" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "휴식 알림 기준 시간"
+    "Sessions": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "세션 수"
           }
         }
       }
     },
-    "Resume tracking" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "추적 재개"
+    "Settings": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "설정"
           }
         }
       }
     },
-    "Save" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "저장"
+    "Share My Detailed Focus Statistics with Party Members": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파티원에게 나의 상세 집중 통계 공유하기"
           }
         }
       }
     },
-    "Send" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "전송"
+    "Status: %@": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "상태: %@"
           }
         }
       }
     },
-    "Sessions" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "세션 수"
+    "Target Apps": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "추적할 작업 앱"
           }
         }
       }
     },
-    "Settings" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "설정"
+    "This user has hidden their history.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 사용자는 히스토리를 비공개로 설정했습니다."
           }
         }
       }
     },
-    "Share My Detailed Focus Statistics with Party Members" : {
-
+    "Time allowed outside Figma before a session ends.": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "피그마가 아닌 다른 앱을 사용해도 이 시간 내에 돌아오면 집중 시간이 유지됩니다."
+          }
+        }
+      }
     },
-    "Status: %@" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "상태: %@"
+    "Time allowed outside target apps before a session ends.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "작업 앱 이탈 후 세션이 종료되기 전까지 허용되는 시간입니다."
           }
         }
       }
     },
-    "This user has hidden their history." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 사용자는 히스토리를 비공개로 설정했습니다."
+    "Time for a short break": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "잠깐 쉬어갈 시간입니다"
           }
         }
       }
     },
-    "Time allowed outside Figma before a session ends." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "피그마가 아닌 다른 앱을 사용해도 이 시간 내에 돌아오면 집중 시간이 유지됩니다."
+    "Time without activity before a session is marked idle.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "해당 시간 동안 마우스/키보드 입력이 없으면 유휴 상태(Idle)로 전환됩니다."
           }
         }
       }
     },
-    "Time for a short break" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "잠깐 쉬어갈 시간입니다"
+    "Timeline": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "타임라인"
           }
         }
       }
     },
-    "Time without activity before a session is marked idle." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "해당 시간 동안 마우스/키보드 입력이 없으면 유휴 상태(Idle)로 전환됩니다."
+    "Timeline Colors:": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "타임라인 색상:"
           }
         }
       }
     },
-    "Timeline" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "타임라인"
+    "Today": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘"
           }
         }
       }
     },
-    "Timeline Colors:" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "타임라인 색상:"
+    "Tracking Figma": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Figma 추적 중"
           }
         }
       }
     },
-    "Today" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오늘"
+    "Tracking paused": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "트래킹 일시정지"
           }
         }
       }
     },
-    "Tracking Figma" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Figma 추적 중"
+    "v%@": {},
+    "Waiting for App": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "작업 대기 중"
           }
         }
       }
     },
-    "Tracking paused" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "트래킹 일시정지"
+    "Waiting for Figma": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "피그마 대기 중"
           }
         }
       }
     },
-    "v%@" : {
-
+    "Weekly": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "주간"
+          }
+        }
+      }
     },
-    "Waiting for Figma" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "피그마 대기 중"
+    "Working in %@": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 작업 중"
           }
         }
       }
     },
-    "Weekly" : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "주간"
+    "Working in App": {
+      "extractionState": "stale",
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "작업 중"
           }
         }
       }
     },
-    "You have focused in Figma for %@." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "피그마에서 %@ 동안 집중했습니다."
+    "You have focused in Figma for %@.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 동안 작업에 집중하셨습니다. (휴식을 권장합니다.)"
           }
         }
       }
     },
-    "You haven't joined any parties yet." : {
-      "localizations" : {
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "아직 참가한 파티가 없습니다."
+    "You haven't joined any parties yet.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "아직 참가한 파티가 없습니다."
           }
         }
       }
     },
-    "최신버전 다운로드 페이지로 이동" : {
-
+    "최신버전 다운로드 페이지로 이동": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "최신버전 다운로드 페이지로 이동"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go to Download Page"
+          }
+        }
+      }
     },
-    "최신버전이 나왔으니 업데이트 해주세요!" : {
-
+    "최신버전이 나왔으니 업데이트 해주세요!": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "최신버전이 나왔으니 업데이트 해주세요!"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A new version is available. Please update!"
+          }
+        }
+      }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

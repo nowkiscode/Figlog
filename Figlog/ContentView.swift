@@ -25,7 +25,7 @@ struct ContentView: View {
     @State private var selectedTab: Tab = .stats
 
     private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.2.3"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.3.0"
     }
 
     var body: some View {
@@ -116,36 +116,85 @@ struct ContentView: View {
             }
             .padding(.bottom, 4)
 
-            let stats = cachedStats
-            let totalTime = stats.reduce(0) { $1.totalFocusTime + $0 }
-            let totalIdle = stats.reduce(0) { $1.totalIdleTime + $0 }
-            let periodTitle: LocalizedStringKey = historyPeriod == 7 ? "Last 7 Days" : "Last 30 Days"
-            
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 40) {
-                    statBlock(title: periodTitle, value: FocusTracker.formatCompactDuration(totalTime))
-                    statBlock(title: "Idle Total", value: FocusTracker.formatCompactDuration(totalIdle))
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    let stats = cachedStats
+                    let totalTime = stats.reduce(0) { $1.totalFocusTime + $0 }
+                    let totalIdle = stats.reduce(0) { $1.totalIdleTime + $0 }
+                    let periodTitle: LocalizedStringKey = historyPeriod == 7 ? "Last 7 Days" : "Last 30 Days"
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 40) {
+                            statBlock(title: periodTitle, value: FocusTracker.formatCompactDuration(totalTime))
+                            statBlock(title: "Idle Total", value: FocusTracker.formatCompactDuration(totalIdle))
+                        }
+                    }
+                    .padding(.vertical, 8)
+
+                    Text("Activity Heatmap")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .padding(.top, 8)
+
+                    VStack(alignment: .leading) {
+                        if historyPeriod == 7 {
+                            weeklyBarChart(stats: stats)
+                                .padding(.top, 4)
+                        } else {
+                            calendarHeatmap(stats: stats, period: historyPeriod)
+                                .padding(.top, 4)
+                        }
+                    }
+                    
+                    Divider()
+                        .padding(.vertical, 16)
+                        
+                    Text("App Usage")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .padding(.bottom, 8)
+                        
+                    appUsageView(stats: stats)
+                    
+                    Spacer()
                 }
             }
-            .padding(.vertical, 8)
-
-            Text("Activity Heatmap")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-
-            VStack(alignment: .leading) {
-                if historyPeriod == 7 {
-                    weeklyBarChart(stats: stats)
-                        .padding(.top, 4)
-                } else {
-                    calendarHeatmap(stats: stats, period: historyPeriod)
-                        .padding(.top, 4)
-                }
-            }
-            .frame(height: 160, alignment: .top)
-            
-            Spacer()
         }
+    }
+    
+    private func appUsageView(stats: [DailyFocusRecord]) -> some View {
+        let usage = calculateAppUsage(from: stats)
+        
+        return VStack(alignment: .leading, spacing: 12) {
+            if usage.isEmpty {
+                Text("No app usage data available")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            } else {
+                ForEach(usage, id: \.app) { item in
+                    HStack {
+                        Text(item.app)
+                            .font(.subheadline)
+                        Spacer()
+                        Text(FocusTracker.formatCompactDuration(item.time))
+                            .font(.subheadline)
+                            .monospacedDigit()
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func calculateAppUsage(from stats: [DailyFocusRecord]) -> [(app: String, time: TimeInterval)] {
+        var usageDict: [String: TimeInterval] = [:]
+        for record in stats {
+            for session in record.sessions {
+                let appName = session.appName ?? "Figma" // Fallback to Figma for old records
+                usageDict[appName, default: 0] += session.duration
+            }
+        }
+        return usageDict.map { (app: $0.key, time: $0.value) }.sorted { $0.time > $1.time }
     }
 
     private func calendarHeatmap(stats: [DailyFocusRecord], period: Int) -> some View {
@@ -241,7 +290,7 @@ struct ContentView: View {
                     .font(.title2)
                     .fontWeight(.semibold)
 
-                Text("Real Figma focus time")
+                Text("Real focus time")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -400,7 +449,7 @@ struct ContentView: View {
                     }
                 }
             } else {
-                Text("No Figma focus sessions yet today")
+                Text("No focus sessions yet today")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .frame(height: 54, alignment: .topLeading)
@@ -616,7 +665,7 @@ struct HelpView: View {
                     .font(.subheadline).bold()
                 HStack {
                     Circle().fill(.green).frame(width: 8, height: 8)
-                    Text("Green: Currently tracking Figma session")
+                    Text("Green: Currently tracking focus session")
                 }
                 HStack {
                     Circle().fill(Color.accentColor).frame(width: 8, height: 8)
@@ -631,14 +680,14 @@ struct HelpView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Grace Period:")
                     .font(.subheadline).bold()
-                Text("Allows you to switch to other apps briefly without breaking your current focus session. If you return to Figma within this time, the session continues uninterrupted. If not, the timer stops and deducts the grace period.")
+                Text("Allows you to switch to other apps briefly without breaking your current focus session. If you return to your target app within this time, the session continues uninterrupted. If not, the timer stops and deducts the grace period.")
                     .fixedSize(horizontal: false, vertical: true)
             }
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Pause/Resume:")
                     .font(.subheadline).bold()
-                Text("Manually pause tracking if you want to keep Figma open but stop the timer. It will automatically resume the next time you actively use Figma.")
+                Text("Manually pause tracking if you want to keep your target app open but stop the timer. It will automatically resume the next time you actively use the app.")
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

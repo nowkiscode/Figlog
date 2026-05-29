@@ -9,12 +9,14 @@ import AppKit
 import Combine
 import Foundation
 import UserNotifications
+import os
 
 struct FocusSession: Codable, Identifiable, Equatable {
     let id: UUID
     let startedAt: Date
     var endedAt: Date
     var duration: TimeInterval
+    var appName: String?
 }
 
 @MainActor
@@ -22,23 +24,23 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
 
     enum TrackingState {
         case tracking
-        case activeOutsideFigma
+        case activeOutsideTargetApp
         case idle
-        case waitingForFigma
+        case waitingForTargetApp
         case paused
     }
 
     @Published private(set) var isTracking = false
     @Published private(set) var isIdle = false
     @Published private(set) var isPaused = false
-    @Published private(set) var isUsingFigma = false
+    @Published private(set) var isUsingTargetApp = false
     @Published private(set) var todayFocusTime: TimeInterval = 0
     @Published private(set) var todayIdleTime: TimeInterval = 0
     @Published private(set) var todaySessions: [FocusSession] = []
     @Published private(set) var breakRemindersEnabled = true
 
     @Published private(set) var idleThreshold: TimeInterval = 60
-    @Published private(set) var nonFigmaGracePeriod: TimeInterval = 5 * 60
+    @Published private(set) var nonTargetAppGracePeriod: TimeInterval = 5 * 60
     @Published private(set) var breakReminderThreshold: TimeInterval = 50 * 60
 
     private let idleThresholdKey = "FigLog.FocusTracker.IdleThreshold"
@@ -53,15 +55,31 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
     
     // Firebase Syncing
     private var lastSyncedTrackingState: TrackingState?
+    private var lastSyncedAppName: String?
     private var lastFirebaseSyncDate: Date?
     private var hasEnteredFocusSession = false
-    private var nonFigmaActivityDuration: TimeInterval = 0
+    private var nonTargetAppActivityDuration: TimeInterval = 0
 
     private var lastTickDate = Date()
     private var lastEmergencyAutosaveAt = Date()
     private var notificationCancellables = Set<AnyCancellable>()
 
-    private let figmaBundleIdentifier = "com.figma.Desktop"
+    
+    struct TargetApp: Identifiable, Equatable {
+        let id: String // Main identifier
+        let name: String
+        let bundleIDs: [String]
+    }
+
+    static let supportedApps: [TargetApp] = [
+        TargetApp(id: "Figma", name: "Figma", bundleIDs: ["com.figma.Desktop"]),
+        TargetApp(id: "Framer", name: "Framer", bundleIDs: ["com.framer.electron", "com.framer.desktop"]),
+        TargetApp(id: "PowerPoint", name: "PowerPoint", bundleIDs: ["com.microsoft.Powerpoint"])
+    ]
+
+    @Published private(set) var activeTargetAppName: String? = nil
+    @Published private(set) var enabledTargetAppIDs: Set<String> = ["Figma", "Framer", "PowerPoint"]
+
 
     override init() {
         super.init()
@@ -143,17 +161,17 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         }
 
         if isTracking {
-            if isUsingFigma {
+            if isUsingTargetApp {
                 return .tracking
             }
-            return .activeOutsideFigma
+            return .activeOutsideTargetApp
         }
 
         if isIdle {
             return .idle
         }
 
-        return .waitingForFigma
+        return .waitingForTargetApp
     }
 
     var statusText: String {
@@ -161,13 +179,14 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         case .paused:
             return "Paused"
         case .tracking:
-            return "Tracking Figma"
-        case .activeOutsideFigma:
-            return "Out of Figma but still tracking"
+            let app = activeTargetAppName ?? "app"
+            return String(localized: "Working in \(app)")
+        case .activeOutsideTargetApp:
+            return "Out of app but still tracking"
         case .idle:
             return "Idle"
-        case .waitingForFigma:
-            return "Waiting for Figma"
+        case .waitingForTargetApp:
+            return "Waiting for app"
         }
     }
 
@@ -230,8 +249,13 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         print("Break reminder set to \(enabled)")
     }
 
-    func setNonFigmaGracePeriod(_ period: TimeInterval) {
-        nonFigmaGracePeriod = period
+    func setEnabledTargetAppIDs(_ ids: Set<String>) {
+        enabledTargetAppIDs = ids
+        UserDefaults.standard.set(Array(ids), forKey: "FigLog.FocusTracker.EnabledTargetAppIDs")
+    }
+    
+    func setNonTargetAppGracePeriod(_ period: TimeInterval) {
+        nonTargetAppGracePeriod = period
         UserDefaults.standard.set(period, forKey: gracePeriodKey)
         print("GracePeriod Time set \(period)")
     }
@@ -268,7 +292,7 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         endActiveSession(at: Date())
         persistSnapshot()
         
-        FirebaseManager.shared.updateMyStatus(status: "offline", todayFocusTime: todayFocusTime)
+        FirebaseManager.shared.updateMyStatus(status: "offline", activeAppName: nil, todayFocusTime: todayFocusTime)
     }
 
     private func tick() {
@@ -312,10 +336,34 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
             todayIdleTime += 1
         }
 
-        let isFigmaActive = activeApp == figmaBundleIdentifier
-        isUsingFigma = isFigmaActive
+        var isTargetAppActive = false
+        var currentAppName: String? = nil
+        if let activeApp = activeApp, let matchedApp = Self.supportedApps.first(where: { $0.bundleIDs.contains(activeApp) }), enabledTargetAppIDs.contains(matchedApp.id) {
+            isTargetAppActive = true
+            currentAppName = matchedApp.name
+        }
+        isUsingTargetApp = isTargetAppActive
+        if isTargetAppActive {
+            if activeTargetAppName != currentAppName {
+                let msg = "🎯 Target App Changed to: \(currentAppName ?? "Unknown")"
+                print(msg)
+                Logger().info("Figlog_Test: \(msg)")
+                
+                if isTracking && hasEnteredFocusSession && activeSession != nil {
+                    let oldApp = activeSession?.appName
+                    if oldApp != nil && oldApp != currentAppName {
+                        endActiveSession(at: now)
+                        hasEnteredFocusSession = true // Keep tracking state active for new app
+                        isTracking = true
+                    }
+                }
+            }
+            activeTargetAppName = currentAppName
+        } else if !isTracking {
+            activeTargetAppName = nil
+        }
 
-        if isFigmaActive && !isIdle && isPaused {
+        if isTargetAppActive && !isIdle && isPaused {
             isPaused = false
         }
 
@@ -323,34 +371,34 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
             return
         }
 
-        if isFigmaActive && !isIdle {
-            if hasEnteredFocusSession && nonFigmaActivityDuration > 0 {
-                todayFocusTime += nonFigmaActivityDuration
+        if isTargetAppActive && !isIdle {
+            if hasEnteredFocusSession && nonTargetAppActivityDuration > 0 {
+                todayFocusTime += nonTargetAppActivityDuration
                 if activeSession != nil {
-                    activeSession?.duration += nonFigmaActivityDuration
+                    activeSession?.duration += nonTargetAppActivityDuration
                 }
             }
             hasEnteredFocusSession = true
-            nonFigmaActivityDuration = 0
+            nonTargetAppActivityDuration = 0
         }
 
         if hasEnteredFocusSession && !isIdle {
 
-            if !isFigmaActive {
-                nonFigmaActivityDuration += 1
+            if !isTargetAppActive {
+                nonTargetAppActivityDuration += 1
             } else {
-                nonFigmaActivityDuration = 0
+                nonTargetAppActivityDuration = 0
             }
 
-            if nonFigmaActivityDuration >= nonFigmaGracePeriod {
+            if nonTargetAppActivityDuration >= nonTargetAppGracePeriod {
                 isTracking = false
                 hasEnteredFocusSession = false
                 
-                let backdatedEnd = now.addingTimeInterval(-nonFigmaGracePeriod)
+                let backdatedEnd = now.addingTimeInterval(-nonTargetAppGracePeriod)
                 endActiveSession(at: backdatedEnd)
             } else {
                 isTracking = true
-                if isFigmaActive {
+                if isTargetAppActive {
                     todayFocusTime += 1
                     updateActiveSession(at: now)
                 }
@@ -360,7 +408,7 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
             isTracking = false
 
             if isIdle {
-                nonFigmaActivityDuration = 0
+                nonTargetAppActivityDuration = 0
                 hasEnteredFocusSession = false
                 endActiveSession(at: now)
             }
@@ -376,20 +424,22 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
         // Firebase Status Sync (Every 5 minutes or on state change)
         let newState = self.trackingState
         let stateChanged = lastSyncedTrackingState != newState
+        let appChanged = lastSyncedAppName != activeTargetAppName
         let timeSinceLastSync = lastFirebaseSyncDate.map { now.timeIntervalSince($0) } ?? 100
         
-        if stateChanged || timeSinceLastSync >= 300 {
+        if stateChanged || appChanged || timeSinceLastSync >= 300 {
             var statusString = "offline"
             switch newState {
-            case .tracking, .activeOutsideFigma: statusString = "tracking"
+            case .tracking, .activeOutsideTargetApp: statusString = "tracking"
             case .idle: statusString = "idle"
             case .paused: statusString = "paused"
-            case .waitingForFigma: statusString = "waiting"
+            case .waitingForTargetApp: statusString = "waiting"
             }
             
-            FirebaseManager.shared.updateMyStatus(status: statusString, todayFocusTime: todayFocusTime)
+            FirebaseManager.shared.updateMyStatus(status: statusString, activeAppName: activeTargetAppName, todayFocusTime: todayFocusTime)
             
             lastSyncedTrackingState = newState
+            lastSyncedAppName = activeTargetAppName
             lastFirebaseSyncDate = now
         }
     }
@@ -400,7 +450,8 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
                 id: UUID(),
                 startedAt: date,
                 endedAt: date,
-                duration: 0
+                duration: 0,
+                appName: activeTargetAppName
             )
         }
 
@@ -423,7 +474,7 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
 
         activeSession = nil
         hasEnteredFocusSession = false
-        nonFigmaActivityDuration = 0
+        nonTargetAppActivityDuration = 0
         didSendBreakReminderForActiveSession = false
         persistSnapshot()
     }
@@ -447,7 +498,10 @@ final class FocusTracker: NSObject, ObservableObject, UNUserNotificationCenterDe
             breakRemindersEnabled = defaults.bool(forKey: breakReminderKey)
         }
         if defaults.object(forKey: gracePeriodKey) != nil {
-            nonFigmaGracePeriod = defaults.double(forKey: gracePeriodKey)
+            nonTargetAppGracePeriod = defaults.double(forKey: gracePeriodKey)
+        }
+        if let savedIDs = defaults.stringArray(forKey: "FigLog.FocusTracker.EnabledTargetAppIDs") {
+            enabledTargetAppIDs = Set(savedIDs)
         }
         if defaults.object(forKey: breakThresholdKey) != nil {
             breakReminderThreshold = defaults.double(forKey: breakThresholdKey)
