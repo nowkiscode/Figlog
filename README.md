@@ -19,7 +19,6 @@
 4. *최초 실행 시 Figma의 활성화 여부를 감지하기 위해 **손쉬운 사용(Accessibility)** 권한 허용이 필요합니다.*
 5. ![image](./1.png)
 6. 앱을 실행하면 macOS 상단 메뉴바에 Figlog 아이콘이 표시됩니다.
-7. 로컬 빌드 시 발생하는 Ad-hoc 서명/Quarantine 해제 방법은 [xcode_ad_hoc_build_guide.md](file:///Users/nowk/Documents/Figlog/xcode_ad_hoc_build_guide.md)를 참고하세요.
 
 
 ### Windows (C# / WinUI 3)
