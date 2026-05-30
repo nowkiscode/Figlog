@@ -55,21 +55,6 @@
 
 ---
 
-## 💻 기술 스택 (Tech Stack)
-
-### macOS Client
-- **UI:** SwiftUI (Swift 6 Concurrency 지원)
-- **Framework:** AppKit, CoreGraphics (시스템 입력 및 윈도우 감지)
-- **Database:** Firebase Cloud Firestore SDK
-- **Architecture:** Universal Binary (Apple Silicon `arm64` & Intel `x86_64`)
-
-### Windows Client (REST API)
-- **UI:** WinUI 3 / WPF
-- **Framework:** Win32 API (P/Invoke - `GetForegroundWindow`, `GetLastInputInfo`)
-- **Database:** Firebase REST API (가볍고 무설치 단일 파일 컴파일 지원)
-
----
-
 ## 📄 라이선스 (License)
 
 This project is licensed under the MIT License.
