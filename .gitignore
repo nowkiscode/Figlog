@@ -1,0 +1,9 @@
+# Xcode / macOS / Build folders
+.DS_Store
+build/
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Firebase configuration
+Figlog/GoogleService-Info.plist
